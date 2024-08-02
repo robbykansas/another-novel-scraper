@@ -5,6 +5,7 @@ import (
 	"log"
 	"robbykansas/another-novel-scraper/cmd/flags"
 	"robbykansas/another-novel-scraper/cmd/novel"
+	"robbykansas/another-novel-scraper/cmd/sources"
 	"robbykansas/another-novel-scraper/cmd/steps"
 	"robbykansas/another-novel-scraper/cmd/ui/listInput"
 	"robbykansas/another-novel-scraper/cmd/ui/textInput"
@@ -64,9 +65,12 @@ var titleCmd = &cobra.Command{
 			}
 		}
 
+		novelhall, _ := sources.NovelhallSearch(novel.NovelTitle)
+		fmt.Printf("%+v\n", novelhall)
+
 		if novel.Web == "" {
 			step := steps.Steps["web"]
-			p = tea.NewProgram(listInput.InitialModelMulti(step.Options, options.Web, step.Headers, novel))
+			p = tea.NewProgram(listInput.InitialModelMulti(step.ListTitle, options.Web, step.Headers, novel))
 			if _, err := p.Run(); err != nil {
 				cobra.CheckErr(err)
 			}
