@@ -72,7 +72,7 @@ var titleCmd = &cobra.Command{
 
 		if novel.Web == "" {
 			step := steps.Steps["web"]
-			step.ListTitle = searchTitle["1stKissNovel"]
+			step.ListTitle = searchTitle["Novelhall"]
 			p = tea.NewProgram(listInput.InitialModelMulti(searchTitle["Novelhall"], options.Web, step.Headers, novel))
 			if _, err := p.Run(); err != nil {
 				cobra.CheckErr(err)
