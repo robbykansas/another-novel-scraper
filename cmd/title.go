@@ -64,7 +64,7 @@ var titleCmd = &cobra.Command{
 				log.Fatal("failed to set title flag value", err)
 			}
 		}
-
+		fmt.Println("test")
 		// novelhall, _ := sources.NovelhallSearch(novel.NovelTitle)
 		// firstKiss := sources.NewFirstKissNovel()
 		searchTitle, _ := search.SearchTitle(novel.NovelTitle)
