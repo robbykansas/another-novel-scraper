@@ -2,8 +2,8 @@ package listInput
 
 import (
 	"fmt"
+	"robbykansas/another-novel-scraper/cmd/flags"
 	"robbykansas/another-novel-scraper/cmd/novel"
-	"robbykansas/another-novel-scraper/cmd/steps"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -33,7 +33,7 @@ func (s *Selection) Update(value string) {
 // It has the required methods that make it a bubbletea.Model
 type model struct {
 	cursor   int
-	choices  []steps.Item
+	choices  []flags.NovelData
 	selected map[int]struct{}
 	choice   *Selection
 	header   string
@@ -45,7 +45,7 @@ func (m model) Init() tea.Cmd {
 
 // InitialModelMulti initializes a multiInput step with
 // the given data
-func InitialModelMulti(choices []steps.Item, selection *Selection, header string, novel *novel.Novel) model {
+func InitialModelMulti(choices []flags.NovelData, selection *Selection, header string, novel *novel.Novel) model {
 	return model{
 		choices:  choices,
 		selected: make(map[int]struct{}),
@@ -103,6 +103,7 @@ func (m model) View() string {
 		if m.cursor == i {
 			cursor = focusedStyle.Render(">")
 			choice.WebName = selectedItemStyle.Render(choice.WebName)
+			choice.Title = selectedItemDescStyle.Render(choice.Title)
 			choice.AvailableChapter = selectedItemDescStyle.Render(choice.AvailableChapter)
 		}
 
@@ -112,9 +113,10 @@ func (m model) View() string {
 		}
 
 		webName := focusedStyle.Render(choice.WebName)
+		title := descriptionStyle.Render(choice.Title)
 		availableChapter := descriptionStyle.Render(choice.AvailableChapter)
 
-		s += fmt.Sprintf("%s [%s] %s\n%s\n\n", cursor, checked, webName, availableChapter)
+		s += fmt.Sprintf("%s [%s] %s\n%s\n%s\n\n", cursor, checked, webName, title, availableChapter)
 	}
 
 	s += fmt.Sprintf("Press %s to confirm choice.\n\n", focusedStyle.Render("y"))

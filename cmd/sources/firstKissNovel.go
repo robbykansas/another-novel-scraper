@@ -4,30 +4,31 @@ import (
 	"fmt"
 	"log"
 	"robbykansas/another-novel-scraper/cmd/flags"
+
 	"strings"
 
 	"github.com/gocolly/colly/v2"
 )
 
-func NovelhallSearch(searchTitle string, webInfo *flags.NovelInfo) ([]flags.NovelData, error) {
-	// originSearchTitle := searchTitle
-	// searchTitle = strings.ReplaceAll(searchTitle, " ", "+")
+func FirstKissNovelSearch(searchTitle string, webInfo *flags.NovelInfo) ([]flags.NovelData, error) {
+	originSearchTitle := searchTitle
+	searchTitle = strings.ReplaceAll(searchTitle, " ", "+")
 	path := fmt.Sprintf(string(webInfo.SearchUrl), searchTitle)
 
 	c := colly.NewCollector()
 	var novels []flags.NovelData
 
-	c.OnHTML(".section3 table tbody tr", func(e *colly.HTMLElement) {
-		Title := e.ChildText("td:nth-child(2)")
-		Url := e.ChildAttrs("a", "href")
-		LatestChapter := e.ChildText("td:nth-child(3)")
+	c.OnHTML(".c-tabs-item__content", func(e *colly.HTMLElement) {
+		Title := e.ChildText(".post-title")
+		Url := e.ChildAttr("a", "href")
+		LatestChapter := e.ChildText(".latest-chap")
 
-		WebName := "Novelhall"
-		if strings.Contains(strings.ToLower(Title), strings.ToLower(searchTitle)) {
+		WebName := "1stKissNovel"
+		if strings.Contains(strings.ToLower(Title), strings.ToLower(originSearchTitle)) {
 			novel := &flags.NovelData{
 				WebName:          WebName,
 				Title:            Title,
-				Url:              Url[1],
+				Url:              Url,
 				AvailableChapter: fmt.Sprintf("<= %s", LatestChapter),
 			}
 

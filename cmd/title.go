@@ -5,7 +5,7 @@ import (
 	"log"
 	"robbykansas/another-novel-scraper/cmd/flags"
 	"robbykansas/another-novel-scraper/cmd/novel"
-	"robbykansas/another-novel-scraper/cmd/sources"
+	"robbykansas/another-novel-scraper/cmd/search"
 	"robbykansas/another-novel-scraper/cmd/steps"
 	"robbykansas/another-novel-scraper/cmd/ui/listInput"
 	"robbykansas/another-novel-scraper/cmd/ui/textInput"
@@ -19,7 +19,7 @@ func init() {
 	rootCmd.AddCommand(titleCmd)
 
 	titleCmd.Flags().StringP("title", "n", "", "title of the novel")
-	titleCmd.Flags().VarP(&flagWeb, "web", "w", flags.AvailableWeb)
+	titleCmd.Flags().VarP(&flagWeb, "web", "w", "available web")
 }
 
 type Options struct {
@@ -65,12 +65,15 @@ var titleCmd = &cobra.Command{
 			}
 		}
 
-		novelhall, _ := sources.NovelhallSearch(novel.NovelTitle)
-		fmt.Printf("%+v\n", novelhall)
+		// novelhall, _ := sources.NovelhallSearch(novel.NovelTitle)
+		// firstKiss := sources.NewFirstKissNovel()
+		searchTitle, _ := search.SearchTitle(novel.NovelTitle)
+		// fmt.Printf("%+v\n", novelhall)
 
 		if novel.Web == "" {
 			step := steps.Steps["web"]
-			p = tea.NewProgram(listInput.InitialModelMulti(step.ListTitle, options.Web, step.Headers, novel))
+			step.ListTitle = searchTitle["1stKissNovel"]
+			p = tea.NewProgram(listInput.InitialModelMulti(searchTitle["Novelhall"], options.Web, step.Headers, novel))
 			if _, err := p.Run(); err != nil {
 				cobra.CheckErr(err)
 			}

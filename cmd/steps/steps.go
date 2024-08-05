@@ -5,9 +5,9 @@ import "robbykansas/another-novel-scraper/cmd/flags"
 // A StepSchema contains the data that is used
 // for an individual step of the CLI
 type StepSchema struct {
-	StepName  string // The name of a given step
-	ListTitle []Item // The slice of each option for a given step
-	Headers   string // The title displayed at the top of a given step
+	StepName  string            // The name of a given step
+	ListTitle []flags.NovelData // The slice of each option for a given step
+	Headers   string            // The title displayed at the top of a given step
 	Field     string
 }
 
@@ -27,19 +27,10 @@ func InitSteps(projectType flags.Web) *Steps {
 	steps := &Steps{
 		map[string]StepSchema{
 			"web": {
-				StepName: "web for scraping",
-				ListTitle: []Item{
-					{
-						WebName:          "Syosetu",
-						AvailableChapter: "1-100",
-					},
-					{
-						WebName:          "NovelFull",
-						AvailableChapter: "1-50",
-					},
-				},
-				Headers: "Where you want the novel scraping from?",
-				Field:   projectType.String(),
+				StepName:  "web for scraping",
+				ListTitle: []flags.NovelData{},
+				Headers:   "Where you want the novel scraping from?",
+				Field:     projectType.String(),
 			},
 		},
 	}
