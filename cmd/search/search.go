@@ -18,14 +18,13 @@ func SearchTitle(title string) (map[string][]flags.NovelData, error) {
 		if err != nil {
 			fmt.Println(err, "<<<<<<< error this")
 		}
-		fmt.Println(result, "<<<<<< result")
 
 		for _, g := range result {
 			groupedTitle[g.WebName] = append(groupedTitle[g.WebName], g)
 		}
 	}
 
-	fmt.Printf("%+v\n", groupedTitle)
+	// fmt.Printf("%+v\n", groupedTitle)
 
 	return groupedTitle, nil
 }
