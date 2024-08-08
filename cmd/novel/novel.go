@@ -9,9 +9,10 @@ import (
 )
 
 type Novel struct {
-	NovelTitle string
-	Web        flags.Web
-	Exit       bool
+	NovelTitle  string
+	ChosenTitle flags.ChosenTitle
+	Web         flags.Web
+	Exit        bool
 }
 
 func (n *Novel) ExitCLI(p *tea.Program) {
