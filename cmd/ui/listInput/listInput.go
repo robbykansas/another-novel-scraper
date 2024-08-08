@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"robbykansas/another-novel-scraper/cmd/flags"
 	"robbykansas/another-novel-scraper/cmd/novel"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/paginator"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"golang.org/x/exp/maps"
 )
 
 // Change this
@@ -21,9 +23,11 @@ var (
 
 type sessionState uint
 
+var startPagination int
+
 const (
-	titleView sessionState = iota
-	webView   sessionState = iota
+	TitleView sessionState = iota
+	WebView   sessionState = iota
 )
 
 // A Selection represents a choice made in a multiInput step
@@ -40,14 +44,15 @@ func (s *Selection) Update(value string) {
 //
 // It has the required methods that make it a bubbletea.Model
 type model struct {
-	cursor    int
-	choices   []flags.NovelData
-	selected  map[int]struct{}
-	choice    *Selection
-	header    string
-	exit      *bool
-	paginator paginator.Model
-	state     sessionState
+	cursor       int
+	titleChoices []string
+	choices      []flags.NovelData
+	selected     map[int]struct{}
+	choice       *Selection
+	header       string
+	exit         *bool
+	paginator    paginator.Model
+	state        sessionState
 }
 
 func (m model) Init() tea.Cmd {
@@ -58,7 +63,7 @@ var limitPagination = 3
 
 // InitialModelMulti initializes a multiInput step with
 // the given data
-func InitialModelMulti(choices []flags.NovelData, selection *Selection, header string, novel *novel.Novel) model {
+func InitialModelMulti(choices map[string][]flags.NovelData, selection *Selection, header string, novel *novel.Novel, state sessionState) model {
 	p := paginator.New()
 	p.Type = paginator.Dots
 	p.PerPage = limitPagination
@@ -66,14 +71,19 @@ func InitialModelMulti(choices []flags.NovelData, selection *Selection, header s
 	p.InactiveDot = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "250", Dark: "238"}).Render("•")
 	p.SetTotalPages(len(choices))
 
+	var titleChoices []string
+	titleChoices = append(titleChoices, maps.Keys(choices)...)
+	flags.AllowedTitle = titleChoices
+
 	return model{
-		choices:   choices,
-		selected:  make(map[int]struct{}),
-		choice:    selection,
-		header:    titleStyle.Render(header),
-		exit:      &novel.Exit,
-		paginator: p,
-		state:     titleView,
+		titleChoices: titleChoices,
+		choices:      choices[novel.ChosenTitle.String()],
+		selected:     make(map[int]struct{}),
+		choice:       selection,
+		header:       titleStyle.Render(header),
+		exit:         &novel.Exit,
+		paginator:    p,
+		state:        state,
 	}
 }
 
@@ -109,8 +119,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "y":
 			if len(m.selected) == 1 {
 				for selectedKey := range m.selected {
-					m.choice.Update(m.choices[selectedKey].WebName)
-					m.cursor = selectedKey
+					switch m.state {
+					case WebView:
+						m.choice.Update(m.choices[selectedKey].WebName)
+						m.cursor = selectedKey
+					case TitleView:
+						m.choice.Update(m.titleChoices[startPagination+selectedKey])
+						m.cursor = selectedKey
+					}
 				}
 				return m, tea.Quit
 			}
@@ -123,16 +139,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // View is called to draw the multiInput step
 func (m model) View() string {
 	s := m.header + "\n\n"
-	// var b strings.Builder
-	start, end := m.paginator.GetSliceBounds(len(m.choices))
-
-	if m.state == titleView {
-		for i, choice := range m.choices[start:end] {
+	var b strings.Builder
+	if m.state == TitleView {
+		start, end := m.paginator.GetSliceBounds(len(m.titleChoices))
+		startPagination = start
+		for i, choice := range m.titleChoices[start:end] {
 			cursor := " "
 			if m.cursor == i {
 				cursor = focusedStyle.Render(">")
-				choice.Title = selectedItemDescStyle.Render(choice.Title)
-				choice.AvailableChapter = selectedItemDescStyle.Render(choice.AvailableChapter)
+				choice = selectedItemStyle.Render(choice)
 			}
 
 			checked := " "
@@ -140,12 +155,13 @@ func (m model) View() string {
 				checked = focusedStyle.Render("x")
 			}
 
-			title := descriptionStyle.Render(choice.Title)
-			availableChapter := descriptionStyle.Render(choice.AvailableChapter)
+			title := focusedStyle.Render(choice)
 
-			s += fmt.Sprintf("%s [%s] %s\n%s\n\n", cursor, checked, title, availableChapter)
+			s += fmt.Sprintf("%s [%s] %s\n\n", cursor, checked, title)
 		}
 	} else {
+		start, end := m.paginator.GetSliceBounds(len(m.choices))
+		startPagination = start
 		for i, choice := range m.choices[start:end] {
 			cursor := " "
 			if m.cursor == i {
@@ -168,6 +184,9 @@ func (m model) View() string {
 		}
 	}
 
-	s += fmt.Sprintf("Press %s to confirm choice.\n\n", focusedStyle.Render("y"))
+	b.WriteString("  " + m.paginator.View())
+	b.WriteString("\n\n  h/l ←/→ page • q: quit\n")
+
+	s += fmt.Sprintf("%s\n Press %s to confirm choice.\n\n", b.String(), focusedStyle.Render("y"))
 	return s
 }
