@@ -20,7 +20,7 @@ func SearchTitle(title string) (map[string][]flags.NovelData, error) {
 		}
 
 		for _, g := range result {
-			groupedTitle[g.WebName] = append(groupedTitle[g.WebName], g)
+			groupedTitle[g.Title] = append(groupedTitle[g.Title], g)
 		}
 	}
 
