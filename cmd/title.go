@@ -16,15 +16,18 @@ import (
 
 func init() {
 	var flagWeb flags.Web
+	var flagChosenTitle flags.ChosenTitle
 	rootCmd.AddCommand(titleCmd)
 
 	titleCmd.Flags().StringP("title", "n", "", "title of the novel")
+	titleCmd.Flags().VarP(&flagChosenTitle, "chosenTitle", "c", "chosen title")
 	titleCmd.Flags().VarP(&flagWeb, "web", "w", "available web")
 }
 
 type Options struct {
-	Title *textInput.Output
-	Web   *listInput.Selection
+	Title       *textInput.Output
+	ChosenTitle *listInput.Selection
+	Web         *listInput.Selection
 }
 
 var titleCmd = &cobra.Command{
@@ -36,16 +39,19 @@ var titleCmd = &cobra.Command{
 		var p *tea.Program
 
 		flagTitle := cmd.Flag("title").Value.String()
+		flagChosenTitle := flags.ChosenTitle(cmd.Flag("chosenTitle").Value.String())
 		flagWeb := flags.Web(cmd.Flag("web").Value.String())
 
 		options := Options{
-			Title: &textInput.Output{},
-			Web:   &listInput.Selection{},
+			Title:       &textInput.Output{},
+			ChosenTitle: &listInput.Selection{},
+			Web:         &listInput.Selection{},
 		}
 
 		novel := &novel.Novel{
-			NovelTitle: flagTitle,
-			Web:        flagWeb,
+			NovelTitle:  flagTitle,
+			ChosenTitle: flagChosenTitle,
+			Web:         flagWeb,
 		}
 
 		steps := steps.InitSteps(flagWeb)
@@ -68,11 +74,27 @@ var titleCmd = &cobra.Command{
 		// firstKiss := sources.NewFirstKissNovel()
 		searchTitle, _ := search.SearchTitle(novel.NovelTitle)
 		// fmt.Printf("%+v\n", novelhall)
+		//searchTitle["Novelhall"]
+
+		if novel.ChosenTitle == "" {
+			p = tea.NewProgram(listInput.InitialModelMulti(searchTitle, options.ChosenTitle, "Title Choices", novel, listInput.TitleView))
+			if _, err := p.Run(); err != nil {
+				cobra.CheckErr(err)
+			}
+
+			novel.ExitCLI(p)
+
+			novel.ChosenTitle = flags.ChosenTitle(options.ChosenTitle.Choice)
+			err := cmd.Flag("chosenTitle").Value.Set(novel.ChosenTitle.String())
+			if err != nil {
+				log.Fatal("failed to set chosen title")
+			}
+		}
 
 		if novel.Web == "" {
 			step := steps.Steps["web"]
 			step.ListTitle = searchTitle["Novelhall"]
-			p = tea.NewProgram(listInput.InitialModelMulti(searchTitle["Novelhall"], options.Web, step.Headers, novel))
+			p = tea.NewProgram(listInput.InitialModelMulti(searchTitle, options.Web, step.Headers, novel, listInput.WebView))
 			if _, err := p.Run(); err != nil {
 				cobra.CheckErr(err)
 			}
@@ -88,6 +110,6 @@ var titleCmd = &cobra.Command{
 			}
 		}
 
-		fmt.Println(novel.NovelTitle, novel.Web, "<<<<<<<<<<<<<<<<<<<< this")
+		fmt.Println(novel.NovelTitle, novel.ChosenTitle, novel.Web, "<<<<<<<<<<<<<<<<<<<< this")
 	},
 }
