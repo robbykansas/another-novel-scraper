@@ -23,7 +23,8 @@ var (
 
 type sessionState uint
 
-var startPagination int
+var pageNow int
+var savePage int
 
 const (
 	TitleView sessionState = iota
@@ -47,7 +48,7 @@ type model struct {
 	cursor       int
 	titleChoices []string
 	choices      []flags.NovelData
-	selected     map[int]struct{}
+	selected     map[int]int
 	choice       *Selection
 	header       string
 	exit         *bool
@@ -69,7 +70,12 @@ func InitialModelMulti(choices map[string][]flags.NovelData, selection *Selectio
 	p.PerPage = limitPagination
 	p.ActiveDot = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "235", Dark: "252"}).Render("•")
 	p.InactiveDot = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "250", Dark: "238"}).Render("•")
-	p.SetTotalPages(len(choices))
+
+	if state == TitleView {
+		p.SetTotalPages(len(choices))
+	} else {
+		p.SetTotalPages(len(choices[novel.ChosenTitle.String()]))
+	}
 
 	var titleChoices []string
 	titleChoices = append(titleChoices, maps.Keys(choices)...)
@@ -78,7 +84,7 @@ func InitialModelMulti(choices map[string][]flags.NovelData, selection *Selectio
 	return model{
 		titleChoices: titleChoices,
 		choices:      choices[novel.ChosenTitle.String()],
-		selected:     make(map[int]struct{}),
+		selected:     make(map[int]int),
 		choice:       selection,
 		header:       titleStyle.Render(header),
 		exit:         &novel.Exit,
@@ -108,23 +114,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "enter", " ":
 			if len(m.selected) == 1 {
-				m.selected = make(map[int]struct{})
+				m.selected = make(map[int]int)
 			}
 			_, ok := m.selected[m.cursor]
 			if ok {
 				delete(m.selected, m.cursor)
 			} else {
-				m.selected[m.cursor] = struct{}{}
+				m.selected[m.cursor] = pageNow
+				savePage = pageNow
 			}
 		case "y":
 			if len(m.selected) == 1 {
 				for selectedKey := range m.selected {
 					switch m.state {
 					case WebView:
-						m.choice.Update(m.choices[selectedKey].WebName)
+						m.choice.Update(m.choices[savePage+selectedKey].WebName)
 						m.cursor = selectedKey
 					case TitleView:
-						m.choice.Update(m.titleChoices[startPagination+selectedKey])
+						m.choice.Update(m.titleChoices[savePage+selectedKey])
 						m.cursor = selectedKey
 					}
 				}
@@ -142,7 +149,7 @@ func (m model) View() string {
 	var b strings.Builder
 	if m.state == TitleView {
 		start, end := m.paginator.GetSliceBounds(len(m.titleChoices))
-		startPagination = start
+		pageNow = start
 		for i, choice := range m.titleChoices[start:end] {
 			cursor := " "
 			if m.cursor == i {
@@ -151,8 +158,10 @@ func (m model) View() string {
 			}
 
 			checked := " "
-			if _, ok := m.selected[i]; ok {
-				checked = focusedStyle.Render("x")
+			if d, ok := m.selected[i]; ok {
+				if d == start {
+					checked = focusedStyle.Render("x")
+				}
 			}
 
 			title := focusedStyle.Render(choice)
@@ -161,7 +170,7 @@ func (m model) View() string {
 		}
 	} else {
 		start, end := m.paginator.GetSliceBounds(len(m.choices))
-		startPagination = start
+		pageNow = start
 		for i, choice := range m.choices[start:end] {
 			cursor := " "
 			if m.cursor == i {
@@ -172,8 +181,10 @@ func (m model) View() string {
 			}
 
 			checked := " "
-			if _, ok := m.selected[i]; ok {
-				checked = focusedStyle.Render("x")
+			if d, ok := m.selected[i]; ok {
+				if d == start {
+					checked = focusedStyle.Render("x")
+				}
 			}
 
 			webName := focusedStyle.Render(choice.WebName)
