@@ -3,15 +3,16 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"os"
 	"robbykansas/another-novel-scraper/cmd/flags"
 	"robbykansas/another-novel-scraper/cmd/novel"
 	"robbykansas/another-novel-scraper/cmd/search"
-	"robbykansas/another-novel-scraper/cmd/steps"
 	"robbykansas/another-novel-scraper/cmd/ui/listInput"
 	"robbykansas/another-novel-scraper/cmd/ui/textInput"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
+	"golang.org/x/exp/maps"
 )
 
 func init() {
@@ -54,8 +55,6 @@ var titleCmd = &cobra.Command{
 			Web:         flagWeb,
 		}
 
-		steps := steps.InitSteps(flagWeb)
-
 		if novel.NovelTitle == "" {
 			p = tea.NewProgram(textInput.InitialModel(options.Title, "Insert title novel?", novel))
 			if _, err := p.Run(); err != nil {
@@ -70,14 +69,19 @@ var titleCmd = &cobra.Command{
 				log.Fatal("failed to set title flag value", err)
 			}
 		}
-		// novelhall, _ := sources.NovelhallSearch(novel.NovelTitle)
-		// firstKiss := sources.NewFirstKissNovel()
-		searchTitle, _ := search.SearchTitle(novel.NovelTitle)
-		// fmt.Printf("%+v\n", novelhall)
-		//searchTitle["Novelhall"]
+
+		searchTitle, err := search.SearchTitle(novel.NovelTitle)
+		if err != nil {
+			fmt.Println("<<<<< error search")
+			os.Exit(1)
+		}
 
 		if novel.ChosenTitle == "" {
-			p = tea.NewProgram(listInput.InitialModelMulti(searchTitle, options.ChosenTitle, "Title Choices", novel, listInput.TitleView))
+			headers := "Title Choices"
+			var titleChoices []string
+			titleChoices = append(titleChoices, maps.Keys(searchTitle)...)
+			flags.AllowedTitle = titleChoices
+			p = tea.NewProgram(listInput.InitialModelMulti(searchTitle, options.ChosenTitle, headers, novel, listInput.TitleView))
 			if _, err := p.Run(); err != nil {
 				cobra.CheckErr(err)
 			}
@@ -92,17 +96,15 @@ var titleCmd = &cobra.Command{
 		}
 
 		if novel.Web == "" {
-			step := steps.Steps["web"]
-			step.ListTitle = searchTitle["Novelhall"]
-			p = tea.NewProgram(listInput.InitialModelMulti(searchTitle, options.Web, step.Headers, novel, listInput.WebView))
+			headers := "Where you want the novel scraping from?"
+			p = tea.NewProgram(listInput.InitialModelMulti(searchTitle, options.Web, headers, novel, listInput.WebView))
 			if _, err := p.Run(); err != nil {
 				cobra.CheckErr(err)
 			}
 
 			novel.ExitCLI(p)
 
-			step.Field = options.Web.Choice
-
+			flags.AllowedWeb = append(flags.AllowedWeb, options.Web.Choice)
 			novel.Web = flags.Web(options.Web.Choice)
 			err := cmd.Flag("web").Value.Set(novel.Web.String())
 			if err != nil {
