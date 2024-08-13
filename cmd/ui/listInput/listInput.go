@@ -9,7 +9,6 @@ import (
 	"github.com/charmbracelet/bubbles/paginator"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"golang.org/x/exp/maps"
 )
 
 // Change this
@@ -24,6 +23,7 @@ var (
 type sessionState uint
 
 var pageNow int
+var limitPage int
 var savePage int
 
 const (
@@ -77,12 +77,8 @@ func InitialModelMulti(choices map[string][]flags.NovelData, selection *Selectio
 		p.SetTotalPages(len(choices[novel.ChosenTitle.String()]))
 	}
 
-	var titleChoices []string
-	titleChoices = append(titleChoices, maps.Keys(choices)...)
-	flags.AllowedTitle = titleChoices
-
 	return model{
-		titleChoices: titleChoices,
+		titleChoices: flags.AllowedTitle,
 		choices:      choices[novel.ChosenTitle.String()],
 		selected:     make(map[int]int),
 		choice:       selection,
@@ -109,8 +105,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor--
 			}
 		case "down", "j":
-			if m.cursor < limitPagination-1 {
-				m.cursor++
+			if limitPage >= limitPagination {
+				if m.cursor < limitPagination-1 {
+					m.cursor++
+				}
+			} else {
+				if m.cursor < limitPage-1 {
+					m.cursor++
+				}
 			}
 		case "enter", " ":
 			if len(m.selected) == 1 {
@@ -150,6 +152,7 @@ func (m model) View() string {
 	if m.state == TitleView {
 		start, end := m.paginator.GetSliceBounds(len(m.titleChoices))
 		pageNow = start
+		limitPage = end
 		for i, choice := range m.titleChoices[start:end] {
 			cursor := " "
 			if m.cursor == i {
@@ -171,6 +174,7 @@ func (m model) View() string {
 	} else {
 		start, end := m.paginator.GetSliceBounds(len(m.choices))
 		pageNow = start
+		limitPage = end
 		for i, choice := range m.choices[start:end] {
 			cursor := " "
 			if m.cursor == i {
