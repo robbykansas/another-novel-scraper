@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"robbykansas/another-novel-scraper/cmd/content"
 	"robbykansas/another-novel-scraper/cmd/flags"
 	"robbykansas/another-novel-scraper/cmd/novel"
 	"robbykansas/another-novel-scraper/cmd/search"
@@ -23,12 +24,14 @@ func init() {
 	titleCmd.Flags().StringP("title", "n", "", "title of the novel")
 	titleCmd.Flags().VarP(&flagChosenTitle, "chosenTitle", "c", "chosen title")
 	titleCmd.Flags().VarP(&flagWeb, "web", "w", "available web")
+	titleCmd.Flags().StringP("folder", "f", "", "folder download")
 }
 
 type Options struct {
 	Title       *textInput.Output
 	ChosenTitle *listInput.Selection
 	Web         *listInput.Selection
+	Folder      *textInput.Output
 }
 
 var titleCmd = &cobra.Command{
@@ -42,21 +45,24 @@ var titleCmd = &cobra.Command{
 		flagTitle := cmd.Flag("title").Value.String()
 		flagChosenTitle := flags.ChosenTitle(cmd.Flag("chosenTitle").Value.String())
 		flagWeb := flags.Web(cmd.Flag("web").Value.String())
+		flagFolder := cmd.Flag("folder").Value.String()
 
 		options := Options{
 			Title:       &textInput.Output{},
 			ChosenTitle: &listInput.Selection{},
 			Web:         &listInput.Selection{},
+			Folder:      &textInput.Output{},
 		}
 
 		novel := &novel.Novel{
 			NovelTitle:  flagTitle,
 			ChosenTitle: flagChosenTitle,
 			Web:         flagWeb,
+			Folder:      flagFolder,
 		}
 
 		if novel.NovelTitle == "" {
-			p = tea.NewProgram(textInput.InitialModel(options.Title, "Insert title novel?", novel))
+			p = tea.NewProgram(textInput.InitialModel(options.Title, "Insert title novel?", novel, "Let This Grieving Soul Retire - Woe Is the Weakling Who Leads the Strongest Party"))
 			if _, err := p.Run(); err != nil {
 				cobra.CheckErr(err)
 			}
@@ -112,6 +118,23 @@ var titleCmd = &cobra.Command{
 			}
 		}
 
-		fmt.Println(novel.NovelTitle, novel.ChosenTitle, novel.Web, "<<<<<<<<<<<<<<<<<<<< this")
+		p = tea.NewProgram(textInput.InitialModel(options.Folder, "Download folder location?", novel, "/Users/yourname/Downloads"))
+		if _, err := p.Run(); err != nil {
+			cobra.CheckErr(err)
+		}
+
+		novel.ExitCLI(p)
+
+		novel.Folder = options.Folder.Output
+		errFlag := cmd.Flag("folder").Value.Set(novel.Folder)
+		if errFlag != nil {
+			log.Fatal("failed to set download folder flag value", errFlag)
+		}
+
+		content.GetContent(novel.Web.String(), novel.Folder, novel.ChosenTitle.String())
+
+		fmt.Println(novel.NovelTitle, novel.ChosenTitle, novel.Web, novel.Folder, "<<<<<<<<<<<<<<<<<<<< this")
+
+		os.Exit(1)
 	},
 }
