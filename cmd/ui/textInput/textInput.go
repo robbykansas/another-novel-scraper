@@ -33,9 +33,9 @@ type model struct {
 	header    string
 }
 
-func InitialModel(output *Output, header string, novel *novel.Novel) model {
+func InitialModel(output *Output, header string, novel *novel.Novel, placeholder string) model {
 	ti := textinput.New()
-	ti.Placeholder = "Let This Grieving Soul Retire - Woe Is the Weakling Who Leads the Strongest Party"
+	ti.Placeholder = placeholder
 	ti.Focus()
 	ti.CharLimit = 156
 	ti.Width = 150
