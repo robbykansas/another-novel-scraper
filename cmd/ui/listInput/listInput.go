@@ -130,7 +130,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				for selectedKey := range m.selected {
 					switch m.state {
 					case WebView:
-						m.choice.Update(m.choices[savePage+selectedKey].WebName)
+						m.choice.Update(
+							fmt.Sprintf("%s,%s",
+								m.choices[savePage+selectedKey].WebName,
+								m.choices[savePage+selectedKey].Url))
 						m.cursor = selectedKey
 					case TitleView:
 						m.choice.Update(m.titleChoices[savePage+selectedKey])
