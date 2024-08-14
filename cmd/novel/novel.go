@@ -12,6 +12,7 @@ type Novel struct {
 	NovelTitle  string
 	ChosenTitle flags.ChosenTitle
 	Web         flags.Web
+	Folder      string
 	Exit        bool
 }
 
