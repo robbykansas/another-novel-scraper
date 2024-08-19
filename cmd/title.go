@@ -13,10 +13,20 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"golang.org/x/exp/maps"
 )
 
 func init() {
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(".")
+	err := viper.ReadInConfig()
+	if err != nil {
+		fmt.Println(err.Error(), "<<<<< error read in config viper")
+		os.Exit(1)
+	}
+
 	var flagWeb flags.Web
 	var flagChosenTitle flags.ChosenTitle
 	rootCmd.AddCommand(titleCmd)
@@ -62,7 +72,10 @@ var titleCmd = &cobra.Command{
 		}
 
 		if novel.NovelTitle == "" {
-			p = tea.NewProgram(textInput.InitialModel(options.Title, "Insert title novel?", novel, "Let This Grieving Soul Retire - Woe Is the Weakling Who Leads the Strongest Party"))
+			state := textInput.TitleInput
+			header := "Insert title novel?"
+			placeholder := "Let This Grieving Soul Retire - Woe Is the Weakling Who Leads the Strongest Party"
+			p = tea.NewProgram(textInput.InitialModel(options.Title, header, novel, placeholder, state))
 			if _, err := p.Run(); err != nil {
 				cobra.CheckErr(err)
 			}
@@ -118,7 +131,10 @@ var titleCmd = &cobra.Command{
 			}
 		}
 
-		p = tea.NewProgram(textInput.InitialModel(options.Folder, "Download folder location?", novel, "/Users/yourname/Downloads"))
+		state := textInput.FolderInput
+		header := "Download folder location?"
+		placeholder := "/Users/yourname/Downloads"
+		p = tea.NewProgram(textInput.InitialModel(options.Folder, header, novel, placeholder, state))
 		if _, err := p.Run(); err != nil {
 			cobra.CheckErr(err)
 		}
@@ -129,6 +145,13 @@ var titleCmd = &cobra.Command{
 		errFlag := cmd.Flag("folder").Value.Set(novel.Folder)
 		if errFlag != nil {
 			log.Fatal("failed to set download folder flag value", errFlag)
+		}
+
+		viper.Set("DownloadFolder", novel.Folder)
+		errWrite := viper.WriteConfig()
+		if errWrite != nil {
+			fmt.Println(errWrite.Error(), "<<<<< error write viper")
+			os.Exit(1)
 		}
 
 		content.GetContent(novel.Web.String(), novel.Folder, novel.ChosenTitle.String())
