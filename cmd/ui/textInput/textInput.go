@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -33,8 +34,19 @@ type model struct {
 	header    string
 }
 
-func InitialModel(output *Output, header string, novel *novel.Novel, placeholder string) model {
+type sessionState uint
+
+const (
+	TitleInput  sessionState = iota
+	FolderInput sessionState = iota
+)
+
+func InitialModel(output *Output, header string, novel *novel.Novel, placeholder string, state sessionState) model {
 	ti := textinput.New()
+	if viper.GetString("DownloadFolder") != "nil" && state == FolderInput {
+		ti.SetValue(viper.GetString("DownloadFolder"))
+	}
+
 	ti.Placeholder = placeholder
 	ti.Focus()
 	ti.CharLimit = 156
