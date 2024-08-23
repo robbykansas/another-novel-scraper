@@ -7,7 +7,8 @@ import (
 )
 
 var AllContent = map[string]func(string, string) *sources.NovelInfo{
-	"Novelhall": sources.NovelhallContent,
+	"Novelhall":    sources.NovelhallContent,
+	"1stKissNovel": sources.FirstKissNovelContent,
 }
 
 func GetContent(content string, folder string, title string) {
