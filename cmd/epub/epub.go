@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"robbykansas/another-novel-scraper/cmd/sources"
+	"strconv"
 
 	"github.com/go-shiori/go-epub"
 )
@@ -26,32 +27,70 @@ func SetEpub(folder string, content *sources.NovelInfo) {
 		imagePath, _ := RetrieveImage(content.Image)
 		imagePathInternal, err := epub.AddImage(imagePath, "cover.jpg")
 		if err != nil {
-			fmt.Println(err.Error(), "<<<<<< error image path")
+			log.Fatal(err)
 		}
 
 		errCover := epub.SetCover(imagePathInternal, "")
 		if errCover != nil {
-			fmt.Println(err.Error(), "<<<< error set cover")
+			log.Fatal(errCover)
 		}
 	}
 
+	var vol = 1
+	var counter = 0
+
 	for _, item := range content.Data {
-		sectionBody := `<h1>` + item.Title + `</h1>
-		<p>` + item.Content + `</p>`
-		_, err := epub.AddSection(sectionBody, item.Title, "", "")
-		if err != nil {
-			fmt.Println(err.Error(), "<<<<<<<<< Error set content epub")
+		var sectionBody string
+		var titleSection string
+		if counter == 0 {
+			var tempEndVol string
+			stringVol := strconv.Itoa(vol)
+			if len(content.Data) >= 100 {
+				tempEndVol = content.Data[98].Title
+			} else {
+				tempEndVol = content.Data[len(content.Data)-1].Title
+			}
+			startVol := content.Data[counter].Title
+			titleSection = fmt.Sprintf("Vol %s: %s => %s", stringVol, startVol, tempEndVol)
+			sectionBody = fmt.Sprintf("<h1> %s </h1>", titleSection)
 		}
+
+		counter += 1
+
+		if counter%100 == 0 {
+			vol += 1
+			stringVol := strconv.Itoa(vol)
+			if vol*100 < len(content.Data) {
+				startVol := content.Data[counter-1].Title
+				endVol := content.Data[(vol*100)-2].Title
+				titleSection = fmt.Sprintf("Vol %s: %s => %s", stringVol, startVol, endVol)
+				sectionBody = fmt.Sprintf("<h1> %s </h1>", titleSection)
+			} else {
+				startVol := content.Data[counter-1].Title
+				endVol := content.Data[len(content.Data)-1].Title
+				titleSection = fmt.Sprintf("Vol %s: %s => %s", stringVol, startVol, endVol)
+				sectionBody = fmt.Sprintf("<h1> %s </h1>", titleSection)
+			}
+		}
+
+		sectionPath, err := epub.AddSection(sectionBody, titleSection, "", "")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		subSectionBody := fmt.Sprintf(`<h1> %s </h1>
+		<p> %s </p>`, item.Title, item.Content)
+
+		epub.AddSubSection(sectionPath, subSectionBody, item.Title, "", "")
 	}
 
 	errEpub := epub.Write(fmt.Sprintf("%s/%s.epub", folder, content.Title))
 	if errEpub != nil {
-		fmt.Println(errEpub.Error(), "<<<<< error epub write")
+		log.Fatal(errEpub)
 	}
 }
 
 func RetrieveImage(source string) (string, error) {
-	fmt.Println(source, "<<<<<<< source")
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
@@ -68,8 +107,7 @@ func RetrieveImage(source string) (string, error) {
 	if e != nil {
 		log.Fatal(e)
 	}
-	fmt.Printf("%#v", response.Body)
-	fmt.Println(response.StatusCode, "<<<<<< status code")
+
 	defer response.Body.Close()
 
 	//open a file for writing
@@ -81,12 +119,7 @@ func RetrieveImage(source string) (string, error) {
 	defer file.Close()
 
 	// Use io.Copy to just dump the response body to the file. This supports huge files
-	d, err := io.Copy(file, response.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println(d, "<<<<<<<")
+	io.Copy(file, response.Body)
 
 	return location, nil
 }
