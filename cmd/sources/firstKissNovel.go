@@ -56,6 +56,7 @@ func FirstKissNovelSearch(searchTitle string, webInfo flags.WebInfo, wg *sync.Wa
 	}
 
 	ch <- novels
+	chErr <- nil
 }
 
 func FirstKissNovelContent(path string, title string) *NovelInfo {

@@ -52,6 +52,7 @@ func NovelhallSearch(searchTitle string, webInfo flags.WebInfo, wg *sync.WaitGro
 	}
 
 	ch <- novels
+	chErr <- nil
 }
 
 func NovelhallContent(path string, title string) *NovelInfo {
