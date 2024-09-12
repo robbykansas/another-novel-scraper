@@ -37,8 +37,8 @@ type model struct {
 type sessionState uint
 
 const (
-	TitleInput  sessionState = iota
-	FolderInput sessionState = iota
+	TitleInput sessionState = iota
+	FolderInput
 )
 
 func InitialModel(output *Output, header string, novel *novel.Novel, placeholder string, state sessionState) model {

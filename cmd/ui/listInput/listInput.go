@@ -28,7 +28,7 @@ var savePage int
 
 const (
 	TitleView sessionState = iota
-	WebView   sessionState = iota
+	WebView
 )
 
 // A Selection represents a choice made in a multiInput step
@@ -62,7 +62,7 @@ func (m model) Init() tea.Cmd {
 
 var limitPagination = 3
 
-// InitialModelMulti initializes a multiInput step with
+// InitialModelMulti initializes a list input step with
 // the given data
 func InitialModelMulti(choices map[string][]flags.NovelData, selection *Selection, header string, novel *novel.Novel, state sessionState) model {
 	p := paginator.New()
