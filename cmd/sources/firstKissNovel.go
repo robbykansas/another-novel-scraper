@@ -134,7 +134,6 @@ func FirstKissNovelList(url string) []ListChapter {
 
 func FirstKissNovelGetContent(params ListChapter, wg *sync.WaitGroup, ch chan<- ListChapter) {
 	defer wg.Done()
-	time.Sleep(10 * time.Millisecond)
 	c := colly.NewCollector()
 	var content string
 

@@ -1,6 +1,7 @@
 package progressbar
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/progress"
@@ -53,14 +54,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case ProgressMsg:
-		if m.progress.Percent() >= 1.0 {
+		if m.progress.Percent() == 1.0 {
+			fmt.Println("<<<<<<< percent 100")
 			return m, tea.Quit
 		}
 
 		// Note that you can also use progress.Model.SetPercent to set the
 		// percentage value explicitly, too.
 		cmd := m.progress.IncrPercent(m.increments)
-
+		fmt.Println(m.progress.Percent())
 		return m, cmd
 
 	// FrameMsg is sent when the progress bar wants to animate itself
