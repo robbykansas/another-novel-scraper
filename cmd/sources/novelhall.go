@@ -3,10 +3,8 @@ package sources
 import (
 	"fmt"
 	"robbykansas/another-novel-scraper/cmd/flags"
-	"sort"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly/v2"
@@ -56,12 +54,9 @@ func NovelhallSearch(searchTitle string, webInfo flags.WebInfo, wg *sync.WaitGro
 }
 
 func NovelhallContent(path string, title string) *NovelInfo {
-	var wg sync.WaitGroup
-	var channelContent = make(chan ListChapter, 10)
 	Target := fmt.Sprintf("%s%s", Host, path)
 	c := colly.NewCollector()
 	var list []ListChapter
-	var getAllContent []ListChapter
 	Order := 0
 	Author := ""
 	Image := ""
@@ -94,31 +89,12 @@ func NovelhallContent(path string, title string) *NovelInfo {
 		fmt.Println(err.Error(), "<<<<< error content")
 	}
 
-	for _, content := range list {
-		wg.Add(1)
-		time.Sleep(10 * time.Millisecond)
-		go NovelhallGetContent(content, &wg, channelContent)
-	}
-
-	go func() {
-		wg.Wait()
-		close(channelContent)
-	}()
-
-	for c := range channelContent {
-		getAllContent = append(getAllContent, c)
-	}
-
-	sort.Slice(getAllContent, func(i, j int) bool {
-		return getAllContent[i].Order < getAllContent[j].Order
-	})
-
 	res := &NovelInfo{
 		Title:    title,
 		Image:    Image,
 		Author:   Author,
 		Synopsis: Synopsis,
-		Data:     getAllContent,
+		Data:     list,
 	}
 
 	return res

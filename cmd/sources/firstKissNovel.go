@@ -60,12 +60,9 @@ func FirstKissNovelSearch(searchTitle string, webInfo flags.WebInfo, wg *sync.Wa
 }
 
 func FirstKissNovelContent(path string, title string) *NovelInfo {
-	var wg sync.WaitGroup
-	var channelContent = make(chan ListChapter, 10)
+	var list []ListChapter
 	Target := path
 	c := colly.NewCollector()
-	var list []ListChapter
-	var getAllContent []ListChapter
 	Author := ""
 	Image := ""
 	Synopsis := ""
@@ -85,27 +82,12 @@ func FirstKissNovelContent(path string, title string) *NovelInfo {
 
 	list = FirstKissNovelList(Target)
 
-	for _, content := range list {
-		wg.Add(1)
-		time.Sleep(10 * time.Millisecond)
-		go FirstKissNovelGetContent(content, &wg, channelContent)
-	}
-
-	go func() {
-		wg.Wait()
-		close(channelContent)
-	}()
-
-	for c := range channelContent {
-		getAllContent = append(getAllContent, c)
-	}
-
 	res := &NovelInfo{
 		Title:    title,
 		Image:    Image,
 		Author:   Author,
 		Synopsis: Synopsis,
-		Data:     getAllContent,
+		Data:     list,
 	}
 
 	return res
@@ -152,6 +134,7 @@ func FirstKissNovelList(url string) []ListChapter {
 
 func FirstKissNovelGetContent(params ListChapter, wg *sync.WaitGroup, ch chan<- ListChapter) {
 	defer wg.Done()
+	time.Sleep(10 * time.Millisecond)
 	c := colly.NewCollector()
 	var content string
 
