@@ -49,9 +49,10 @@ func GetContent(content string, folder string, title string) {
 				AllContent = append(AllContent, content)
 				p.Send(progressbar.ProgressMsg{})
 			} else {
-				time.Sleep(1 * time.Second)
-				p.Send(progressbar.ProgressMsg{})
-				break
+				time.Sleep(500 * time.Millisecond)
+				for {
+					p.Send(progressbar.ProgressMsg{})
+				}
 			}
 		}
 	}()
