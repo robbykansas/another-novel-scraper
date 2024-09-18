@@ -47,7 +47,7 @@ func SearchTitle(title string) (map[string][]flags.NovelData, error) {
 				// When channel is closed, it will check animated progress, will quit when its finished,
 				// delay is needed because there is on going animated progress
 				time.Sleep(1 * time.Second)
-				p.Send(progressbar.ProgressMsg{})
+				p.Send(tea.Quit())
 				break
 			}
 
