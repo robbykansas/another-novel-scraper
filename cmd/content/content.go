@@ -5,12 +5,14 @@ import (
 	"robbykansas/another-novel-scraper/cmd/epub"
 	"robbykansas/another-novel-scraper/cmd/sources"
 	"robbykansas/another-novel-scraper/cmd/ui/progressbar"
+	"robbykansas/another-novel-scraper/cmd/ui/spinner"
 	"sort"
 	"strings"
 	"sync"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/spf13/cobra"
 )
 
 var ListContent = map[string]interface{}{
@@ -31,7 +33,18 @@ func GetContent(content string, folder string, title string) {
 	WebName := dataContent[0]
 	Url := dataContent[1]
 
+	spinnerModel := spinner.InitialModel()
+	s := tea.NewProgram(spinnerModel)
+
+	go func() {
+		if _, err := s.Run(); err != nil {
+			cobra.CheckErr(err)
+		}
+	}()
+
 	listData := ListContent[WebName].(func(string, string) *sources.NovelInfo)(Url, title)
+
+	s.Send(tea.QuitMsg{})
 
 	progressbarModel := progressbar.InitialModel(len(listData.Data))
 	p := tea.NewProgram(progressbarModel)
@@ -50,9 +63,8 @@ func GetContent(content string, folder string, title string) {
 				p.Send(progressbar.ProgressMsg{})
 			} else {
 				time.Sleep(500 * time.Millisecond)
-				for {
-					p.Send(progressbar.ProgressMsg{})
-				}
+				p.Send(tea.Quit())
+				break
 			}
 		}
 	}()
@@ -65,10 +77,6 @@ func GetContent(content string, folder string, title string) {
 	if _, err := p.Run(); err != nil {
 		log.Fatalf("error running progressbar message: %v", err)
 	}
-
-	// for c := range channelContent {
-	// 	AllContent = append(AllContent, c)
-	// }
 
 	sort.Slice(AllContent, func(i, j int) bool {
 		return AllContent[i].Order < AllContent[j].Order
