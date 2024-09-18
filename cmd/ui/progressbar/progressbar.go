@@ -17,12 +17,10 @@ const (
 var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
 
 type ProgressMsg struct{}
-type ProgressState bool
 
 type model struct {
 	progress   progress.Model
 	increments float64
-	finished   ProgressState
 }
 
 func InitialModel(total int) model {
@@ -32,7 +30,6 @@ func InitialModel(total int) model {
 	return model{
 		progress:   progress,
 		increments: increment,
-		finished:   false,
 	}
 }
 
