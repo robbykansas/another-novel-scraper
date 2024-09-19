@@ -2,6 +2,7 @@ package sources
 
 import (
 	"fmt"
+	"log"
 	"robbykansas/another-novel-scraper/cmd/flags"
 	"strings"
 	"sync"
@@ -84,9 +85,13 @@ func NovelhallContent(path string, title string) *NovelInfo {
 		list = append(list, *info)
 	})
 
+	c.OnHTML(".js-close-wrap", func(e *colly.HTMLElement) {
+		Synopsis = e.Text
+	})
+
 	err := c.Visit(Target)
 	if err != nil {
-		fmt.Println(err.Error(), "<<<<< error content")
+		log.Fatalf("Error while visiting url with error: %v", err)
 	}
 
 	res := &NovelInfo{
@@ -116,7 +121,7 @@ func NovelhallGetContent(params ListChapter, wg *sync.WaitGroup, ch chan<- ListC
 
 	err := c.Visit(path)
 	if err != nil {
-		fmt.Println(err.Error(), "<<<< error get content novelhall")
+		log.Fatalf("Error while getting content with error: %v", err)
 	}
 
 	params.Content = content
