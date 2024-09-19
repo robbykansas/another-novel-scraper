@@ -16,11 +16,15 @@ import (
 func SetEpub(folder string, content *sources.NovelInfo) {
 	epub, err := epub.NewEpub(content.Title)
 	if err != nil {
-		fmt.Println(err.Error(), "<<<< error epub")
+		log.Fatalf("Error creating epub: %v", err)
 	}
 
 	if content.Author != "0" {
 		epub.SetAuthor(content.Author)
+	}
+
+	if content.Synopsis != "" {
+		epub.SetDescription(content.Synopsis)
 	}
 
 	if content.Image != "" {
@@ -88,6 +92,9 @@ func SetEpub(folder string, content *sources.NovelInfo) {
 	if errEpub != nil {
 		log.Fatal(errEpub)
 	}
+
+	location := "./cmd/epub/assets/cover.jpg"
+	os.Remove(location)
 }
 
 func RetrieveImage(source string) (string, error) {
