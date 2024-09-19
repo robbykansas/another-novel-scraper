@@ -6,7 +6,6 @@ import (
 	"log"
 	"robbykansas/another-novel-scraper/cmd/flags"
 	"sort"
-	"time"
 
 	"sync"
 
@@ -103,9 +102,10 @@ func FirstKissNovelList(url string) []ListChapter {
 	var listChapter []ListChapter
 
 	err := chromedp.Run(ctx,
-		chromedp.Navigate(Target),     // Navigate to the page
-		chromedp.Sleep(5*time.Second), // Wait for AJAX content to load
+		chromedp.Navigate(Target), // Navigate to the page
+		// chromedp.Sleep(5*time.Second), // Wait for AJAX content to load
 		chromedp.Click(".chapter-readmore", chromedp.ByQuery),
+		chromedp.WaitReady(".wp-manga-chapter a"),
 		chromedp.Nodes(".wp-manga-chapter a", &nodes, chromedp.NodeVisible, chromedp.ByQueryAll),
 	)
 
