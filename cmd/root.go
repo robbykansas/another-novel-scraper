@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -27,6 +28,13 @@ to quickly create a Cobra application.`,
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
+	cmd, _, errCmd := rootCmd.Find(os.Args[1:])
+	// default cmd if no cmd is given
+	if errCmd == nil && cmd.Use == rootCmd.Use && cmd.Flags().Parse(os.Args[1:]) != pflag.ErrHelp {
+		args := append([]string{titleCmd.Use}, os.Args[1:]...)
+		rootCmd.SetArgs(args)
+	}
+
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
