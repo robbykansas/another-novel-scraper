@@ -105,7 +105,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor--
 			}
 		case "down", "j":
-			if limitPage >= limitPagination {
+			if limitPage%limitPagination-1 >= 0 {
+				if m.cursor < limitPage%limitPagination-1 {
+					m.cursor++
+				}
+			} else if limitPage >= limitPagination {
 				if m.cursor < limitPagination-1 {
 					m.cursor++
 				}
@@ -115,6 +119,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		case "enter", " ":
+			if limitPage%limitPagination-1 >= 0 {
+				if m.cursor > limitPage%limitPagination-1 {
+					m.cursor = limitPage%limitPagination - 1
+				}
+			}
+
 			if len(m.selected) == 1 {
 				m.selected = make(map[int]int)
 			}
@@ -158,6 +168,12 @@ func (m model) View() string {
 		limitPage = end
 		for i, choice := range m.titleChoices[start:end] {
 			cursor := " "
+			if limitPage%limitPagination > 0 {
+				if m.cursor > limitPage%limitPagination-1 {
+					m.cursor = limitPage%limitPagination - 1
+				}
+			}
+
 			if m.cursor == i {
 				cursor = focusedStyle.Render(">")
 				choice = selectedItemStyle.Render(choice)
