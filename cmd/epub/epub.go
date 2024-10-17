@@ -7,13 +7,13 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"robbykansas/another-novel-scraper/cmd/sources"
+	"robbykansas/another-novel-scraper/cmd/models"
 	"strconv"
 
 	"github.com/go-shiori/go-epub"
 )
 
-func SetEpub(folder string, content *sources.NovelInfo) {
+func SetEpub(folder string, content *models.NovelInfo) {
 	epub, err := epub.NewEpub(content.Title)
 	if err != nil {
 		log.Fatalf("Error creating epub: %v", err)
