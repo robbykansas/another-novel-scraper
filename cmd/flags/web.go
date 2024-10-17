@@ -2,9 +2,10 @@ package flags
 
 import (
 	"fmt"
+	"robbykansas/another-novel-scraper/cmd/models"
 )
 
-type Web string
+type Web models.Web
 
 var AllowedWeb []string
 
