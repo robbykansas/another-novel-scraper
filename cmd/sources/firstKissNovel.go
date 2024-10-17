@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"robbykansas/another-novel-scraper/cmd/flags"
+	"robbykansas/another-novel-scraper/cmd/models"
 	"sort"
 
 	"sync"
@@ -17,19 +17,19 @@ import (
 	"github.com/gocolly/colly/v2"
 )
 
-var FirstKissNovelInfo = flags.WebInfo{
+var FirstKissNovelInfo = models.WebInfo{
 	WebName:   "1stKissNovel",
 	SearchUrl: "https://1stkissnovel.org/?s=%s&post_type=wp-manga",
 }
 
-func FirstKissNovelSearch(searchTitle string, webInfo flags.WebInfo, wg *sync.WaitGroup, ch chan<- []flags.NovelData, chErr chan<- error) {
+func FirstKissNovelSearch(searchTitle string, wg *sync.WaitGroup, ch chan<- []models.NovelData, chErr chan<- error) {
 	defer wg.Done()
 	originSearchTitle := searchTitle
 	searchTitle = strings.ReplaceAll(searchTitle, " ", "+")
-	path := fmt.Sprintf(string(webInfo.SearchUrl), searchTitle)
+	path := fmt.Sprintf(FirstKissNovelInfo.SearchUrl, searchTitle)
 
 	c := colly.NewCollector()
-	var novels []flags.NovelData
+	var novels []models.NovelData
 	WebName := "1stKissNovel"
 
 	c.OnHTML(".c-tabs-item__content", func(e *colly.HTMLElement) {
@@ -38,7 +38,7 @@ func FirstKissNovelSearch(searchTitle string, webInfo flags.WebInfo, wg *sync.Wa
 		LatestChapter := e.ChildText(".latest-chap")
 
 		if strings.Contains(strings.ToLower(Title), strings.ToLower(originSearchTitle)) {
-			novel := &flags.NovelData{
+			novel := &models.NovelData{
 				WebName:          WebName,
 				Title:            Title,
 				Url:              Url,
@@ -58,8 +58,8 @@ func FirstKissNovelSearch(searchTitle string, webInfo flags.WebInfo, wg *sync.Wa
 	chErr <- nil
 }
 
-func FirstKissNovelContent(path string, title string) *NovelInfo {
-	var list []ListChapter
+func FirstKissNovelContent(path string, title string) *models.NovelInfo {
+	var list []models.ListChapter
 	Target := path
 	c := colly.NewCollector()
 	Author := ""
@@ -81,7 +81,7 @@ func FirstKissNovelContent(path string, title string) *NovelInfo {
 
 	list = FirstKissNovelList(Target)
 
-	res := &NovelInfo{
+	res := &models.NovelInfo{
 		Title:    title,
 		Image:    Image,
 		Author:   Author,
@@ -92,14 +92,14 @@ func FirstKissNovelContent(path string, title string) *NovelInfo {
 	return res
 }
 
-func FirstKissNovelList(url string) []ListChapter {
+func FirstKissNovelList(url string) []models.ListChapter {
 	Target := url
 	ctx, cancel := chromedp.NewContext(context.Background())
 	defer cancel()
 
 	// var htmlContent string
 	var nodes []*cdp.Node
-	var listChapter []ListChapter
+	var listChapter []models.ListChapter
 
 	err := chromedp.Run(ctx,
 		chromedp.Navigate(Target), // Navigate to the page
@@ -116,7 +116,7 @@ func FirstKissNovelList(url string) []ListChapter {
 	order := len(nodes) + 1
 	for _, n := range nodes {
 		order -= 1
-		chapter := &ListChapter{
+		chapter := &models.ListChapter{
 			Order: order,
 			Title: strings.TrimSpace(n.Children[0].NodeValue),
 			Url:   n.AttributeValue("href"),
@@ -132,7 +132,7 @@ func FirstKissNovelList(url string) []ListChapter {
 	return listChapter
 }
 
-func FirstKissNovelGetContent(params ListChapter, wg *sync.WaitGroup, ch chan<- ListChapter) {
+func FirstKissNovelGetContent(params models.ListChapter, wg *sync.WaitGroup, ch chan<- models.ListChapter) {
 	defer wg.Done()
 	c := colly.NewCollector()
 	var content string
@@ -152,4 +152,11 @@ func FirstKissNovelGetContent(params ListChapter, wg *sync.WaitGroup, ch chan<- 
 	params.Content = content
 
 	ch <- params
+}
+
+func init() {
+	fmt.Println("<<<<<<<<<< access this")
+	models.MapSearch[string(FirstKissNovelInfo.WebName)] = FirstKissNovelSearch
+	models.MapToc[string(FirstKissNovelInfo.WebName)] = FirstKissNovelContent
+	models.MapContent[string(FirstKissNovelInfo.WebName)] = FirstKissNovelGetContent
 }

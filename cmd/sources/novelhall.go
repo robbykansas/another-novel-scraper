@@ -3,7 +3,7 @@ package sources
 import (
 	"fmt"
 	"log"
-	"robbykansas/another-novel-scraper/cmd/flags"
+	"robbykansas/another-novel-scraper/cmd/models"
 	"strings"
 	"sync"
 
@@ -13,19 +13,19 @@ import (
 
 var Host = "https://www.novelhall.com/"
 
-var NovelhallInfo = flags.WebInfo{
+var NovelhallInfo = models.WebInfo{
 	WebName:   "Novelhall",
 	SearchUrl: "https://www.novelhall.com/index.php?s=so&module=book&keyword=%s",
 }
 
-func NovelhallSearch(searchTitle string, webInfo flags.WebInfo, wg *sync.WaitGroup, ch chan<- []flags.NovelData, chErr chan<- error) {
+func NovelhallSearch(searchTitle string, wg *sync.WaitGroup, ch chan<- []models.NovelData, chErr chan<- error) {
 	defer wg.Done()
 	originSearchTitle := searchTitle
 	searchTitle = strings.ReplaceAll(searchTitle, " ", "+")
-	path := fmt.Sprintf(string(webInfo.SearchUrl), searchTitle)
+	path := fmt.Sprintf(NovelhallInfo.SearchUrl, searchTitle)
 
 	c := colly.NewCollector()
-	var novels []flags.NovelData
+	var novels []models.NovelData
 	WebName := "Novelhall"
 
 	c.OnHTML(".section3 table tbody tr", func(e *colly.HTMLElement) {
@@ -34,7 +34,7 @@ func NovelhallSearch(searchTitle string, webInfo flags.WebInfo, wg *sync.WaitGro
 		LatestChapter := e.ChildText("td:nth-child(3)")
 
 		if strings.Contains(strings.ToLower(Title), strings.ToLower(originSearchTitle)) {
-			novel := &flags.NovelData{
+			novel := &models.NovelData{
 				WebName:          WebName,
 				Title:            Title,
 				Url:              Url[1],
@@ -54,10 +54,10 @@ func NovelhallSearch(searchTitle string, webInfo flags.WebInfo, wg *sync.WaitGro
 	chErr <- nil
 }
 
-func NovelhallContent(path string, title string) *NovelInfo {
+func NovelhallContent(path string, title string) *models.NovelInfo {
 	Target := fmt.Sprintf("%s%s", Host, path)
 	c := colly.NewCollector()
-	var list []ListChapter
+	var list []models.ListChapter
 	Order := 0
 	Author := ""
 	Image := ""
@@ -76,7 +76,7 @@ func NovelhallContent(path string, title string) *NovelInfo {
 		Url := e.ChildAttr("a", "href")
 		Order += 1
 
-		info := &ListChapter{
+		info := &models.ListChapter{
 			Order: Order,
 			Title: Title,
 			Url:   Url,
@@ -94,7 +94,7 @@ func NovelhallContent(path string, title string) *NovelInfo {
 		log.Fatalf("Error while visiting url with error: %v", err)
 	}
 
-	res := &NovelInfo{
+	res := &models.NovelInfo{
 		Title:    title,
 		Image:    Image,
 		Author:   Author,
@@ -105,7 +105,7 @@ func NovelhallContent(path string, title string) *NovelInfo {
 	return res
 }
 
-func NovelhallGetContent(params ListChapter, wg *sync.WaitGroup, ch chan<- ListChapter) {
+func NovelhallGetContent(params models.ListChapter, wg *sync.WaitGroup, ch chan<- models.ListChapter) {
 	defer wg.Done()
 	c := colly.NewCollector()
 	path := fmt.Sprintf("%s%s", Host, params.Url)
@@ -127,4 +127,11 @@ func NovelhallGetContent(params ListChapter, wg *sync.WaitGroup, ch chan<- ListC
 	params.Content = content
 
 	ch <- params
+}
+
+func init() {
+	fmt.Println("<<<<<<< access this")
+	models.MapSearch[string(NovelhallInfo.WebName)] = NovelhallSearch
+	models.MapToc[string(NovelhallInfo.WebName)] = NovelhallContent
+	models.MapContent[string(NovelhallInfo.WebName)] = NovelhallGetContent
 }
