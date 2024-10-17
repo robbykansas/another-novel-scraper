@@ -3,6 +3,7 @@ package listInput
 import (
 	"fmt"
 	"robbykansas/another-novel-scraper/cmd/flags"
+	"robbykansas/another-novel-scraper/cmd/models"
 	"robbykansas/another-novel-scraper/cmd/novel"
 	"strings"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// Change this
 var (
 	focusedStyle          = lipgloss.NewStyle().Foreground(lipgloss.Color("#01FAC6")).Bold(true)
 	titleStyle            = lipgloss.NewStyle().Background(lipgloss.Color("#01FAC6")).Foreground(lipgloss.Color("#030303")).Bold(true).Padding(0, 1, 0)
@@ -47,7 +47,7 @@ func (s *Selection) Update(value string) {
 type model struct {
 	cursor       int
 	titleChoices []string
-	choices      []flags.NovelData
+	choices      []models.NovelData
 	selected     map[int]int
 	choice       *Selection
 	header       string
@@ -64,7 +64,7 @@ var limitPagination = 3
 
 // InitialModelMulti initializes a list input step with
 // the given data
-func InitialModelMulti(choices map[string][]flags.NovelData, selection *Selection, header string, novel *novel.Novel, state sessionState) model {
+func InitialModelMulti(choices map[string][]models.NovelData, selection *Selection, header string, novel *novel.Novel, state sessionState) model {
 	p := paginator.New()
 	p.Type = paginator.Dots
 	p.PerPage = limitPagination
