@@ -3,7 +3,7 @@ package content
 import (
 	"log"
 	"robbykansas/another-novel-scraper/cmd/epub"
-	"robbykansas/another-novel-scraper/cmd/sources"
+	"robbykansas/another-novel-scraper/cmd/models"
 	"robbykansas/another-novel-scraper/cmd/ui/progressbar"
 	"robbykansas/another-novel-scraper/cmd/ui/spinner"
 	"sort"
@@ -15,20 +15,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var ListContent = map[string]interface{}{
-	"Novelhall":    sources.NovelhallContent,
-	"1stKissNovel": sources.FirstKissNovelContent,
-}
-
-var GetAllContent = map[string]func(sources.ListChapter, *sync.WaitGroup, chan<- sources.ListChapter){
-	"Novelhall":    sources.NovelhallGetContent,
-	"1stKissNovel": sources.FirstKissNovelGetContent,
-}
-
 func GetContent(content string, folder string, title string) {
 	var wg sync.WaitGroup
-	var channelContent = make(chan sources.ListChapter, 10)
-	var AllContent []sources.ListChapter
+	var channelContent = make(chan models.ListChapter, 10)
+	var AllContent []models.ListChapter
 	dataContent := strings.Split(content, ",")
 	WebName := dataContent[0]
 	Url := dataContent[1]
@@ -42,7 +32,7 @@ func GetContent(content string, folder string, title string) {
 		}
 	}()
 
-	listData := ListContent[WebName].(func(string, string) *sources.NovelInfo)(Url, title)
+	listData := models.MapToc[WebName](Url, title)
 
 	s.Send(tea.QuitMsg{})
 
@@ -52,7 +42,7 @@ func GetContent(content string, folder string, title string) {
 	for _, content := range listData.Data {
 		wg.Add(1)
 		time.Sleep(10 * time.Millisecond)
-		go GetAllContent[WebName](content, &wg, channelContent)
+		go models.MapContent[WebName](content, &wg, channelContent)
 	}
 
 	go func() {

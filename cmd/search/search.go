@@ -2,38 +2,30 @@ package search
 
 import (
 	"log"
-	"robbykansas/another-novel-scraper/cmd/flags"
-	"robbykansas/another-novel-scraper/cmd/sources"
+	"robbykansas/another-novel-scraper/cmd/models"
 	"robbykansas/another-novel-scraper/cmd/ui/progressbar"
 	"time"
 
 	"sync"
 
+	// Call this to trigger the init from package sources
+	_ "robbykansas/another-novel-scraper/cmd/sources"
+
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-var AllWebInfo = []flags.WebInfo{
-	sources.NovelhallInfo,
-	sources.FirstKissNovelInfo,
-}
-
-var AllSources = map[string]func(string, flags.WebInfo, *sync.WaitGroup, chan<- []flags.NovelData, chan<- error){
-	"Novelhall":    sources.NovelhallSearch,
-	"1stKissNovel": sources.FirstKissNovelSearch,
-}
-
-func SearchTitle(title string) (map[string][]flags.NovelData, error) {
+func SearchTitle(title string) (map[string][]models.NovelData, error) {
 	var wg sync.WaitGroup
-	var channelRes = make(chan []flags.NovelData, 5)
+	var channelRes = make(chan []models.NovelData, 5)
 	var channelErr = make(chan error)
-	groupedTitle := make(map[string][]flags.NovelData)
+	groupedTitle := make(map[string][]models.NovelData)
 
-	for _, search := range AllWebInfo {
+	for _, search := range models.MapSearch {
 		wg.Add(1)
-		go AllSources[search.WebName.String()](title, search, &wg, channelRes, channelErr)
+		go search(title, &wg, channelRes, channelErr)
 	}
 
-	progressbarModel := progressbar.InitialModel(len(AllSources))
+	progressbarModel := progressbar.InitialModel(len(models.MapSearch))
 	p := tea.NewProgram(progressbarModel)
 
 	go func() {
