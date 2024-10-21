@@ -130,7 +130,6 @@ func NovelhallGetContent(params models.ListChapter, wg *sync.WaitGroup, ch chan<
 }
 
 func init() {
-	fmt.Println("<<<<<<< access this")
 	models.MapSearch[string(NovelhallInfo.WebName)] = NovelhallSearch
 	models.MapToc[string(NovelhallInfo.WebName)] = NovelhallContent
 	models.MapContent[string(NovelhallInfo.WebName)] = NovelhallGetContent

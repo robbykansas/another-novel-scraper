@@ -35,14 +35,14 @@ func FirstKissNovelSearch(searchTitle string, wg *sync.WaitGroup, ch chan<- []mo
 	c.OnHTML(".c-tabs-item__content", func(e *colly.HTMLElement) {
 		Title := e.ChildText(".post-title")
 		Url := e.ChildAttr("a", "href")
-		LatestChapter := e.ChildText(".latest-chap")
+		// LatestChapter := e.ChildText(".latest-chap")
 
 		if strings.Contains(strings.ToLower(Title), strings.ToLower(originSearchTitle)) {
 			novel := &models.NovelData{
-				WebName:          WebName,
-				Title:            Title,
-				Url:              Url,
-				AvailableChapter: fmt.Sprintf("<= %s", LatestChapter),
+				WebName: WebName,
+				Title:   Title,
+				Url:     Url,
+				// AvailableChapter: fmt.Sprintf("<= %s", LatestChapter),
 			}
 
 			novels = append(novels, *novel)
@@ -155,7 +155,6 @@ func FirstKissNovelGetContent(params models.ListChapter, wg *sync.WaitGroup, ch 
 }
 
 func init() {
-	fmt.Println("<<<<<<<<<< access this")
 	models.MapSearch[string(FirstKissNovelInfo.WebName)] = FirstKissNovelSearch
 	models.MapToc[string(FirstKissNovelInfo.WebName)] = FirstKissNovelContent
 	models.MapContent[string(FirstKissNovelInfo.WebName)] = FirstKissNovelGetContent
