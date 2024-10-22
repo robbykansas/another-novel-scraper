@@ -155,7 +155,8 @@ func FirstKissNovelGetContent(params models.ListChapter, wg *sync.WaitGroup, ch 
 }
 
 func init() {
-	models.MapSearch[string(FirstKissNovelInfo.WebName)] = FirstKissNovelSearch
-	models.MapToc[string(FirstKissNovelInfo.WebName)] = FirstKissNovelContent
-	models.MapContent[string(FirstKissNovelInfo.WebName)] = FirstKissNovelGetContent
+	WebName := string(FirstKissNovelInfo.WebName)
+	models.MapSearch[WebName] = FirstKissNovelSearch
+	models.MapToc[WebName] = FirstKissNovelContent
+	models.MapContent[WebName] = FirstKissNovelGetContent
 }

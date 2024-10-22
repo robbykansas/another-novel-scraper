@@ -11,10 +11,9 @@ import (
 	"github.com/gocolly/colly/v2"
 )
 
-var Host = "https://www.novelhall.com/"
-
 var NovelhallInfo = models.WebInfo{
 	WebName:   "Novelhall",
+	Host:      "https://www.novelhall.com",
 	SearchUrl: "https://www.novelhall.com/index.php?s=so&module=book&keyword=%s",
 }
 
@@ -26,7 +25,6 @@ func NovelhallSearch(searchTitle string, wg *sync.WaitGroup, ch chan<- []models.
 
 	c := colly.NewCollector()
 	var novels []models.NovelData
-	WebName := "Novelhall"
 
 	c.OnHTML(".section3 table tbody tr", func(e *colly.HTMLElement) {
 		Title := e.ChildText("td:nth-child(2)")
@@ -35,7 +33,7 @@ func NovelhallSearch(searchTitle string, wg *sync.WaitGroup, ch chan<- []models.
 
 		if strings.Contains(strings.ToLower(Title), strings.ToLower(originSearchTitle)) {
 			novel := &models.NovelData{
-				WebName:          WebName,
+				WebName:          string(NovelhallInfo.WebName),
 				Title:            Title,
 				Url:              Url[1],
 				AvailableChapter: fmt.Sprintf("<= %s", LatestChapter),
@@ -47,7 +45,7 @@ func NovelhallSearch(searchTitle string, wg *sync.WaitGroup, ch chan<- []models.
 
 	err := c.Visit(path)
 	if err != nil {
-		chErr <- fmt.Errorf("%s %s", WebName, err.Error())
+		chErr <- fmt.Errorf("%s %s", NovelhallInfo.WebName, err.Error())
 	}
 
 	ch <- novels
@@ -55,7 +53,7 @@ func NovelhallSearch(searchTitle string, wg *sync.WaitGroup, ch chan<- []models.
 }
 
 func NovelhallContent(path string, title string) *models.NovelInfo {
-	Target := fmt.Sprintf("%s%s", Host, path)
+	Target := fmt.Sprintf("%s%s", NovelhallInfo.Host, path)
 	c := colly.NewCollector()
 	var list []models.ListChapter
 	Order := 0
@@ -108,7 +106,7 @@ func NovelhallContent(path string, title string) *models.NovelInfo {
 func NovelhallGetContent(params models.ListChapter, wg *sync.WaitGroup, ch chan<- models.ListChapter) {
 	defer wg.Done()
 	c := colly.NewCollector()
-	path := fmt.Sprintf("%s%s", Host, params.Url)
+	path := fmt.Sprintf("%s%s", NovelhallInfo.Host, params.Url)
 	var content string
 
 	c.OnHTML("div#htmlContent.entry-content", func(e *colly.HTMLElement) {
@@ -130,7 +128,8 @@ func NovelhallGetContent(params models.ListChapter, wg *sync.WaitGroup, ch chan<
 }
 
 func init() {
-	models.MapSearch[string(NovelhallInfo.WebName)] = NovelhallSearch
-	models.MapToc[string(NovelhallInfo.WebName)] = NovelhallContent
-	models.MapContent[string(NovelhallInfo.WebName)] = NovelhallGetContent
+	WebName := string(NovelhallInfo.WebName)
+	models.MapSearch[WebName] = NovelhallSearch
+	models.MapToc[WebName] = NovelhallContent
+	models.MapContent[WebName] = NovelhallGetContent
 }
