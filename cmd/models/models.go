@@ -21,6 +21,7 @@ type Web string
 
 type WebInfo struct {
 	WebName   Web
+	Host      string
 	SearchUrl string
 }
 
