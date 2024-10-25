@@ -18,8 +18,8 @@ import (
 )
 
 func init() {
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
+	viper.SetConfigName(".env")
+	viper.SetConfigType("env")
 	viper.AddConfigPath(".")
 	err := viper.ReadInConfig()
 	if err != nil {
@@ -147,7 +147,9 @@ var titleCmd = &cobra.Command{
 			log.Fatal("failed to set download folder flag value", errFlag)
 		}
 
-		viper.Set("DownloadFolder", novel.Folder)
+		fmt.Println("<<<<< access this", novel.Folder)
+		viper.Set("DOWNLOAD_LOCATION", novel.Folder)
+		fmt.Println(">>>>>>>>>>> this", viper.GetString("DOWNLOAD_LOCATION"))
 		errWrite := viper.WriteConfig()
 		if errWrite != nil {
 			fmt.Println(errWrite.Error(), "<<<<< error write viper")

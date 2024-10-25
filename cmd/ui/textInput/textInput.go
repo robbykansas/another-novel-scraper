@@ -43,8 +43,8 @@ const (
 
 func InitialModel(output *Output, header string, novel *novel.Novel, placeholder string, state sessionState) model {
 	ti := textinput.New()
-	if viper.GetString("DownloadFolder") != "nil" && state == FolderInput {
-		ti.SetValue(viper.GetString("DownloadFolder"))
+	if viper.GetString("DOWNLOAD_LOCATION") != "" && state == FolderInput {
+		ti.SetValue(viper.GetString("DOWNLOAD_LOCATION"))
 	}
 
 	ti.Placeholder = placeholder
