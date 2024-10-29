@@ -117,8 +117,12 @@ func RetrieveImage(source string) (string, error) {
 
 	defer response.Body.Close()
 
-	//open a file for writing
-	location := "./cmd/epub/assets/cover.jpg"
+	//open a file for image
+	var location string
+	location = "./cmd/epub/assets/cover.jpg"
+	if _, err := os.Stat(location); os.IsNotExist(err) { //if not local
+		location = fmt.Sprintf("%s/cover.jpg", models.DefaultPath)
+	}
 	file, err := os.Create(location)
 	if err != nil {
 		log.Fatal(err)
