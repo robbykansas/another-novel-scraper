@@ -2,6 +2,7 @@ package textInput
 
 import (
 	"fmt"
+	"os"
 	"robbykansas/another-novel-scraper/cmd/novel"
 
 	"github.com/charmbracelet/bubbles/textinput"
@@ -43,8 +44,8 @@ const (
 
 func InitialModel(output *Output, header string, novel *novel.Novel, placeholder string, state sessionState) model {
 	ti := textinput.New()
-	if viper.GetString("DOWNLOAD_LOCATION") != "" && state == FolderInput {
-		ti.SetValue(viper.GetString("DOWNLOAD_LOCATION"))
+	if viper.GetString("downloadLocation") != "" && state == FolderInput {
+		ti.SetValue(viper.GetString("downloadLocation"))
 	}
 
 	ti.Placeholder = placeholder
@@ -76,6 +77,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, tea.Quit
 			}
 		case tea.KeyCtrlC, tea.KeyEsc:
+			os.Exit(1)
 			return m, tea.Quit
 		}
 
