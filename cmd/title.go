@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"robbykansas/another-novel-scraper/cmd/content"
 	"robbykansas/another-novel-scraper/cmd/flags"
+	"robbykansas/another-novel-scraper/cmd/models"
 	"robbykansas/another-novel-scraper/cmd/novel"
 	"robbykansas/another-novel-scraper/cmd/search"
 	"robbykansas/another-novel-scraper/cmd/ui/listInput"
 	"robbykansas/another-novel-scraper/cmd/ui/textInput"
+	"runtime"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
@@ -18,13 +21,38 @@ import (
 )
 
 func init() {
-	viper.SetConfigName(".env")
-	viper.SetConfigType("env")
-	viper.AddConfigPath(".")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath("/ans-config")
+	viper.SetConfigFile("another-novel-scraper-config")
+
 	err := viper.ReadInConfig()
 	if err != nil {
-		fmt.Println(err.Error(), "<<<<< error read in config viper")
-		os.Exit(1)
+		if runtime.GOOS == "darwin" {
+			models.DefaultPath = "./ans-config"
+			os.Mkdir("ans-config", os.ModePerm)
+
+			if _, err := os.Stat("./ans-config"); err != nil {
+				if os.IsNotExist(err) {
+					log.Fatal("Create directory failed")
+				}
+			}
+		}
+
+		if runtime.GOOS == "windows" {
+			windowsLocal := os.Getenv("LOCALAPPDATA")
+			if windowsLocal == "" {
+				log.Fatal("localappdata is not set")
+			}
+
+			loc := "ans-config"
+			locPath := filepath.Join(windowsLocal, loc)
+
+			models.DefaultPath = locPath
+			if err := os.MkdirAll(locPath, os.ModePerm); err != nil {
+				log.Fatal("Create windows directory failed")
+			}
+		}
+		fmt.Println(err)
 	}
 
 	var flagWeb flags.Web
@@ -91,7 +119,6 @@ var titleCmd = &cobra.Command{
 
 		searchTitle, err := search.SearchTitle(novel.NovelTitle)
 		if err != nil {
-			fmt.Println("<<<<< error search")
 			os.Exit(1)
 		}
 
@@ -147,10 +174,9 @@ var titleCmd = &cobra.Command{
 			log.Fatal("failed to set download folder flag value", errFlag)
 		}
 
-		fmt.Println("<<<<< access this", novel.Folder)
-		viper.Set("DOWNLOAD_LOCATION", novel.Folder)
-		fmt.Println(">>>>>>>>>>> this", viper.GetString("DOWNLOAD_LOCATION"))
-		errWrite := viper.WriteConfig()
+		viper.Set("downloadLocation", novel.Folder)
+		loc := fmt.Sprintf("%s/another-novel-scraper-config.yaml", models.DefaultPath)
+		errWrite := viper.WriteConfigAs(loc)
 		if errWrite != nil {
 			fmt.Println(errWrite.Error(), "<<<<< error write viper")
 			os.Exit(1)
