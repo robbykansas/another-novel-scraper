@@ -41,7 +41,14 @@ func GetContent(content string, folder string, title string) {
 
 	for _, content := range listData.Data {
 		wg.Add(1)
-		time.Sleep(10 * time.Millisecond)
+
+		switch WebName {
+		case "Novelbin":
+			time.Sleep(500 * time.Millisecond)
+		default:
+			time.Sleep(10 * time.Millisecond)
+		}
+
 		go models.MapContent[WebName](content, &wg, channelContent)
 	}
 
