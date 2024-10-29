@@ -4,3 +4,6 @@ run:
 	go build
 	go install
 	${BINARY_NAME}
+
+builds:
+	goreleaser release --snapshot --clean
