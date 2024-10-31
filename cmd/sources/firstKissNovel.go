@@ -76,7 +76,7 @@ func FirstKissNovelContent(path string, title string) *models.NovelInfo {
 
 	err := c.Visit(Target)
 	if err != nil {
-		fmt.Println(err.Error(), "<<<<< error visit first")
+		log.Fatal(err)
 	}
 
 	list = FirstKissNovelList(Target)
