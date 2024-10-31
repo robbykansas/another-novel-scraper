@@ -12,7 +12,6 @@ import (
 	"robbykansas/another-novel-scraper/cmd/search"
 	"robbykansas/another-novel-scraper/cmd/ui/listInput"
 	"robbykansas/another-novel-scraper/cmd/ui/textInput"
-	"runtime"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
@@ -21,38 +20,27 @@ import (
 )
 
 func init() {
+	dir, errP := filepath.Abs(filepath.Dir(os.Args[0]))
+	if errP != nil {
+		log.Fatal(errP)
+	}
+
+	pathFile := fmt.Sprintf("%s/ans-config", dir)
+
+	viper.SetConfigName("another-novel-scraper-config")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath("/ans-config")
-	viper.SetConfigFile("another-novel-scraper-config")
+	viper.AddConfigPath(pathFile)
 
 	err := viper.ReadInConfig()
 	if err != nil {
-		if runtime.GOOS == "darwin" {
-			models.DefaultPath = "./ans-config"
-			os.Mkdir("ans-config", os.ModePerm)
+		models.DefaultPath = pathFile
+		os.Mkdir(pathFile, os.ModePerm)
 
-			if _, err := os.Stat("./ans-config"); err != nil {
-				if os.IsNotExist(err) {
-					log.Fatal("Create directory failed")
-				}
+		if _, err := os.Stat(pathFile); err != nil {
+			if os.IsNotExist(err) {
+				log.Fatal("Create directory failed")
 			}
 		}
-
-		if runtime.GOOS == "windows" {
-			windowsLocal := os.Getenv("LOCALAPPDATA")
-			if windowsLocal == "" {
-				log.Fatal("localappdata is not set")
-			}
-
-			loc := "ans-config"
-			locPath := filepath.Join(windowsLocal, loc)
-
-			models.DefaultPath = locPath
-			if err := os.MkdirAll(locPath, os.ModePerm); err != nil {
-				log.Fatal("Create windows directory failed")
-			}
-		}
-		fmt.Println(err)
 	}
 
 	var flagWeb flags.Web
@@ -178,13 +166,12 @@ var titleCmd = &cobra.Command{
 		loc := fmt.Sprintf("%s/another-novel-scraper-config.yaml", models.DefaultPath)
 		errWrite := viper.WriteConfigAs(loc)
 		if errWrite != nil {
-			fmt.Println(errWrite.Error(), "<<<<< error write viper")
 			os.Exit(1)
 		}
 
 		content.GetContent(novel.Web.String(), novel.Folder, novel.ChosenTitle.String())
 
-		fmt.Println(novel.NovelTitle, novel.ChosenTitle, novel.Web, novel.Folder, "<<<<<<<<<<<<<<<<<<<< this")
+		fmt.Printf("Successfully downloaded novel at %s", novel.Folder)
 
 		os.Exit(1)
 	},
