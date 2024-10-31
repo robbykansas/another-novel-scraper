@@ -94,6 +94,9 @@ func SetEpub(folder string, content *models.NovelInfo) {
 	}
 
 	location := "./cmd/epub/assets/cover.jpg"
+	if _, err := os.Stat(location); os.IsNotExist(err) { //if not local
+		location = fmt.Sprintf("%s/cover.jpg", models.DefaultPath)
+	}
 	os.Remove(location)
 }
 
