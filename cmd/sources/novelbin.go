@@ -123,7 +123,7 @@ func NovelbinGetContent(params models.ListChapter, wg *sync.WaitGroup, ch chan<-
 	c := colly.NewCollector()
 	path := params.Url
 	var content string
-	fmt.Println(params.Order)
+
 	c.OnHTML("div#chr-content", func(e *colly.HTMLElement) {
 		e.DOM.Each(func(_ int, s *goquery.Selection) {
 			h, _ := s.Html()
