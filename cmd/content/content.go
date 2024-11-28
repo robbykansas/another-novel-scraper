@@ -1,6 +1,7 @@
 package content
 
 import (
+	"context"
 	"log"
 	"robbykansas/another-novel-scraper/cmd/epub"
 	"robbykansas/another-novel-scraper/cmd/models"
@@ -39,19 +40,6 @@ func GetContent(content string, folder string, title string) {
 	progressbarModel := progressbar.InitialModel(len(listData.Data))
 	p := tea.NewProgram(progressbarModel)
 
-	for _, content := range listData.Data {
-		wg.Add(1)
-
-		switch WebName {
-		case "Novelbin":
-			time.Sleep(500 * time.Millisecond)
-		default:
-			time.Sleep(10 * time.Millisecond)
-		}
-
-		go models.MapContent[WebName](content, &wg, channelContent)
-	}
-
 	go func() {
 		for {
 			content, ok := <-channelContent
@@ -66,14 +54,39 @@ func GetContent(content string, folder string, title string) {
 		}
 	}()
 
+	ctx, cancel := context.WithCancel(context.Background())
+	go func(ctx context.Context) {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				if _, err := p.Run(); err != nil {
+					log.Fatalf("error running progressbar message: %v", err)
+				}
+			}
+		}
+	}(ctx)
+
+	for _, content := range listData.Data {
+		wg.Add(1)
+
+		switch WebName {
+		case "Novelbin":
+			time.Sleep(500 * time.Millisecond)
+		default:
+			time.Sleep(10 * time.Millisecond)
+		}
+
+		go models.MapContent[WebName](content, &wg, channelContent)
+	}
+
+	cancel()
+
 	go func() {
 		wg.Wait()
 		close(channelContent)
 	}()
-
-	if _, err := p.Run(); err != nil {
-		log.Fatalf("error running progressbar message: %v", err)
-	}
 
 	sort.Slice(AllContent, func(i, j int) bool {
 		return AllContent[i].Order < AllContent[j].Order
