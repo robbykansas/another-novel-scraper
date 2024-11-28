@@ -25,7 +25,7 @@ type WebInfo struct {
 	SearchUrl string
 }
 
-var DefaultPath string
+var DefaultPath string = "./ans-config"
 
 var MapSearch = make(map[string]func(string, *sync.WaitGroup, chan<- []NovelData, chan<- error))
 var MapToc = make(map[string]func(string, string) *NovelInfo)
