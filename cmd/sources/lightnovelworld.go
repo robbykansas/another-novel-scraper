@@ -36,7 +36,6 @@ func LightNovelWorldSearch(searchtitle string, wg *sync.WaitGroup, ch chan<- []m
 	)
 
 	if err != nil {
-		fmt.Println("<<<<<< error search")
 		log.Fatal(err)
 	}
 
