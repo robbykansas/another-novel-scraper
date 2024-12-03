@@ -4,16 +4,33 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
 	"os"
+	"os/exec"
+	"runtime"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
 
+func ClearTerminal() {
+	switch runtime.GOOS {
+	case "windows":
+		cmd := exec.Command("cmd", "/c", "cls")
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	default:
+		fmt.Print("\033[H\033[2J") // ANSI escape code for clearing terminal
+	}
+}
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "another-novel-scraper",
 	Short: "A brief description of your application",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		ClearTerminal()
+	},
 	Long: `A longer description that spans multiple lines and likely contains
 examples and usage of using your application. For example:
 
