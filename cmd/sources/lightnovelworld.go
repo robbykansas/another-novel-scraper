@@ -46,7 +46,7 @@ func LightNovelWorldSearch(searchtitle string, wg *sync.WaitGroup, ch chan<- []m
 	fmt.Println("<<<<<<<<< done")
 }
 
-func init() {
-	WebName := string(LightNovelWorld.WebName)
-	models.MapSearch[WebName] = LightNovelWorldSearch
-}
+// func init() {
+// 	WebName := string(LightNovelWorld.WebName)
+// 	models.MapSearch[WebName] = LightNovelWorldSearch
+// }
