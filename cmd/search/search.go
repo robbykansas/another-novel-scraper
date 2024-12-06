@@ -1,7 +1,6 @@
 package search
 
 import (
-	"context"
 	"log"
 	"robbykansas/another-novel-scraper/cmd/models"
 	"robbykansas/another-novel-scraper/cmd/ui/progressbar"
@@ -29,20 +28,6 @@ func SearchTitle(title string) (map[string][]models.NovelData, error) {
 	progressbarModel := progressbar.InitialModel(len(models.MapSearch))
 	p := tea.NewProgram(progressbarModel)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	go func(ctx context.Context) {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				if _, err := p.Run(); err != nil {
-					log.Fatalf("error running progressbar message: %v", err)
-				}
-			}
-		}
-	}(ctx)
-
 	go func() {
 		for {
 			// Search for channel error because channel will send error even if its a nil
@@ -64,13 +49,15 @@ func SearchTitle(title string) (map[string][]models.NovelData, error) {
 		}
 	}()
 
-	cancel()
-
 	go func() {
 		wg.Wait()
 		close(channelErr)
 		close(channelRes)
 	}()
+
+	if _, err := p.Run(); err != nil {
+		log.Fatalf("error running progressbar message: %v", err)
+	}
 
 	// mapped channel result and grouped it based on title
 	for res := range channelRes {
