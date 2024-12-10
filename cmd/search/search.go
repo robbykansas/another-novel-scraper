@@ -1,6 +1,7 @@
 package search
 
 import (
+	"fmt"
 	"log"
 	"robbykansas/another-novel-scraper/cmd/models"
 	"robbykansas/another-novel-scraper/cmd/ui/progressbar"
@@ -44,7 +45,7 @@ func SearchTitle(title string) (map[string][]models.NovelData, error) {
 			}
 
 			if err != nil {
-				log.Fatalf("error search content message: %v", err)
+				fmt.Printf("error search content message: %v", err)
 			}
 		}
 	}()
