@@ -1,7 +1,6 @@
 package search
 
 import (
-	"fmt"
 	"log"
 	"robbykansas/another-novel-scraper/cmd/models"
 	"robbykansas/another-novel-scraper/cmd/ui/progressbar"
@@ -32,7 +31,7 @@ func SearchTitle(title string) (map[string][]models.NovelData, error) {
 	go func() {
 		for {
 			// Search for channel error because channel will send error even if its a nil
-			err, ok := <-channelErr
+			_, ok := <-channelErr
 			if ok {
 				// Animated progress based on open received channel
 				p.Send(progressbar.ProgressMsg{})
@@ -42,10 +41,6 @@ func SearchTitle(title string) (map[string][]models.NovelData, error) {
 				time.Sleep(1 * time.Second)
 				p.Send(tea.Quit())
 				break
-			}
-
-			if err != nil {
-				fmt.Printf("error search content message: %v", err)
 			}
 		}
 	}()
