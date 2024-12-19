@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"robbykansas/another-novel-scraper/cmd/models"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -62,7 +63,7 @@ func NovelfullSearch(searchTitle string, wg *sync.WaitGroup, ch chan<- []models.
 
 func NovelfullContent(path string, title string) *models.NovelInfo {
 	list := NovelfullList(path)
-	fmt.Println(list)
+	fmt.Println(list, "<<<<<<<<<<<<< novelfull content")
 	return nil
 }
 
@@ -72,6 +73,7 @@ func NovelfullList(url string) []models.ListChapter {
 	var total int
 	var wg sync.WaitGroup
 	channelPage := make(chan []models.ListChapter, 10)
+	var list []models.ListChapter
 
 	c.OnHTML("li.last", func(e *colly.HTMLElement) {
 		lastUrl := e.ChildAttr("a", "href")
@@ -95,12 +97,19 @@ func NovelfullList(url string) []models.ListChapter {
 		go NovelfullEachPage(payload, &wg, channelPage)
 	}
 
-	go func() {
-		wg.Wait()
-		close(channelPage)
-	}()
+	wg.Wait()
+	close(channelPage)
 
-	return nil
+	// each channel page return list and combine them into a single list
+	for chapter := range channelPage {
+		list = append(list, chapter...)
+	}
+
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].Order < list[j].Order
+	})
+
+	return list
 }
 
 func NovelfullEachPage(params *NovelEachPage, wg *sync.WaitGroup, list chan<- []models.ListChapter) {
@@ -113,27 +122,27 @@ func NovelfullEachPage(params *NovelEachPage, wg *sync.WaitGroup, list chan<- []
 
 	c := colly.NewCollector()
 
-	c.OnHTML(".row .list-chapter span.chapter-text", func(e *colly.HTMLElement) {
-		fmt.Println("<<<<<< row list chapter")
-		Title := e.ChildText("a")
-		Url := e.ChildAttr("a", "href")
-		Order += 1
+	c.OnHTML(".row .list-chapter", func(e *colly.HTMLElement) {
+		// case where the list is basically just table ul and li where ul has class and li doesn't
+		e.ForEach("li", func(_ int, el *colly.HTMLElement) {
+			Title := el.ChildText("a")
+			Url := el.ChildAttr("a", "href")
+			Order += 1
 
-		info := &models.ListChapter{
-			Order: Order,
-			Title: Title,
-			Url:   Url,
-		}
+			info := &models.ListChapter{
+				Order: Order,
+				Title: Title,
+				Url:   Url,
+			}
 
-		listChapter = append(listChapter, *info)
+			listChapter = append(listChapter, *info)
+		})
 	})
 
 	err := c.Visit(params.Url)
 	if err != nil {
 		log.Fatalf("Error while visiting url with error: %v", err)
 	}
-
-	fmt.Println(listChapter, "<<<<<<< list chapter")
 
 	list <- listChapter
 }
@@ -165,5 +174,5 @@ func init() {
 	var WebName = string(NovelfullInfo.WebName)
 	models.MapSearch[WebName] = NovelfullSearch
 	models.MapToc[WebName] = NovelfullContent
-	// models.MapContent[WebName] = NovelfullGetContent
+	models.MapContent[WebName] = NovelfullGetContent
 }
