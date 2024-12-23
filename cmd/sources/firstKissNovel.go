@@ -97,13 +97,11 @@ func FirstKissNovelList(url string) []models.ListChapter {
 	ctx, cancel := chromedp.NewContext(context.Background())
 	defer cancel()
 
-	// var htmlContent string
 	var nodes []*cdp.Node
 	var listChapter []models.ListChapter
 
 	err := chromedp.Run(ctx,
 		chromedp.Navigate(Target), // Navigate to the page
-		// chromedp.Sleep(5*time.Second), // Wait for AJAX content to load
 		chromedp.Click(".chapter-readmore", chromedp.ByQuery),
 		chromedp.WaitReady(".wp-manga-chapter a"),
 		chromedp.Nodes(".wp-manga-chapter a", &nodes, chromedp.NodeVisible, chromedp.ByQueryAll),
