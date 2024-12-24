@@ -55,20 +55,43 @@ func NovelfullSearch(searchTitle string, wg *sync.WaitGroup, ch chan<- []models.
 		chErr <- fmt.Errorf("%s %s", NovelfullInfo.WebName, err.Error())
 	}
 
-	fmt.Println(novels)
-
 	ch <- novels
 	chErr <- nil
 }
 
 func NovelfullContent(path string, title string) *models.NovelInfo {
+	c := colly.NewCollector()
+	Author := ""
+	Image := ""
+	Synopsis := ""
+
+	c.OnHTML(".book", func(e *colly.HTMLElement) {
+		Image = fmt.Sprintf("%s%s", NovelfullInfo.Host, e.ChildAttr("img", "src"))
+	})
+
+	c.OnHTML("desc-text", func(e *colly.HTMLElement) {
+		Synopsis = e.Text
+	})
+
+	err := c.Visit(path)
+	if err != nil {
+		log.Fatalf("Error while visiting url with error: %v", err)
+	}
+
 	list := NovelfullList(path)
-	fmt.Println(list, "<<<<<<<<<<<<< novelfull content")
-	return nil
+
+	res := &models.NovelInfo{
+		Title:    title,
+		Image:    Image,
+		Author:   Author,
+		Synopsis: Synopsis,
+		Data:     list,
+	}
+
+	return res
 }
 
 func NovelfullList(url string) []models.ListChapter {
-	fmt.Println("<<<<< access this")
 	c := colly.NewCollector()
 	var total int
 	var wg sync.WaitGroup
@@ -84,8 +107,8 @@ func NovelfullList(url string) []models.ListChapter {
 	if err != nil {
 		log.Fatalf("Error while visiting url with error: %v", err)
 	}
-	fmt.Println(total)
-	for i := 1; i <= 2; i++ {
+
+	for i := 1; i <= total; i++ {
 		wg.Add(1)
 
 		pageUrl := fmt.Sprintf("%s?page=%s", url, strconv.Itoa(i))
@@ -113,7 +136,6 @@ func NovelfullList(url string) []models.ListChapter {
 }
 
 func NovelfullEachPage(params *NovelEachPage, wg *sync.WaitGroup, list chan<- []models.ListChapter) {
-	fmt.Println("<<<<< novel each page")
 	defer wg.Done()
 	// var listEachChapter []NovelEachPage
 	var listChapter []models.ListChapter
@@ -132,7 +154,7 @@ func NovelfullEachPage(params *NovelEachPage, wg *sync.WaitGroup, list chan<- []
 			info := &models.ListChapter{
 				Order: Order,
 				Title: Title,
-				Url:   Url,
+				Url:   fmt.Sprintf("%s%s", NovelfullInfo.Host, Url),
 			}
 
 			listChapter = append(listChapter, *info)
@@ -153,7 +175,7 @@ func NovelfullGetContent(params models.ListChapter, wg *sync.WaitGroup, ch chan<
 	path := params.Url
 	var content string
 
-	c.OnHTML("div#chr-content", func(e *colly.HTMLElement) {
+	c.OnHTML("div#chapter-content", func(e *colly.HTMLElement) {
 		e.DOM.Each(func(_ int, s *goquery.Selection) {
 			h, _ := s.Html()
 			content = fmt.Sprintf("%s \n", h)
