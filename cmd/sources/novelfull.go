@@ -120,8 +120,10 @@ func NovelfullList(url string) []models.ListChapter {
 		go NovelfullEachPage(payload, &wg, channelPage)
 	}
 
-	wg.Wait()
-	close(channelPage)
+	go func() {
+		wg.Wait()
+		close(channelPage)
+	}()
 
 	// each channel page return list and combine them into a single list
 	for chapter := range channelPage {
