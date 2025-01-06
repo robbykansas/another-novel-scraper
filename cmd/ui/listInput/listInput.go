@@ -105,17 +105,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor--
 			}
 		case "down", "j":
-			if limitPage%limitPagination-1 >= 0 {
-				if m.cursor < limitPage%limitPagination-1 {
+			switch m.state {
+			case WebView:
+				if m.cursor < len(m.choices)-1 {
 					m.cursor++
 				}
-			} else if limitPage >= limitPagination {
-				if m.cursor < limitPagination-1 {
-					m.cursor++
-				}
-			} else {
-				if m.cursor < limitPage-1 {
-					m.cursor++
+			case TitleView:
+				if limitPage%limitPagination-1 >= 0 {
+					if m.cursor < limitPage%limitPagination-1 {
+						m.cursor++
+					}
+				} else if limitPage >= limitPagination {
+					if m.cursor < limitPagination-1 {
+						m.cursor++
+					}
+				} else {
+					if m.cursor < limitPage-1 {
+						m.cursor++
+					}
 				}
 			}
 		case "enter", " ":
@@ -191,10 +198,7 @@ func (m model) View() string {
 			s += fmt.Sprintf("%s [%s] %s\n\n", cursor, checked, title)
 		}
 	} else {
-		start, end := m.paginator.GetSliceBounds(len(m.choices))
-		pageNow = start
-		limitPage = end
-		for i, choice := range m.choices[start:end] {
+		for i, choice := range m.choices {
 			cursor := " "
 			if m.cursor == i {
 				cursor = focusedStyle.Render(">")
@@ -204,10 +208,8 @@ func (m model) View() string {
 			}
 
 			checked := " "
-			if d, ok := m.selected[i]; ok {
-				if d == start {
-					checked = focusedStyle.Render("x")
-				}
+			if _, ok := m.selected[i]; ok {
+				checked = focusedStyle.Render("x")
 			}
 
 			webName := focusedStyle.Render(choice.WebName)
@@ -217,9 +219,6 @@ func (m model) View() string {
 			s += fmt.Sprintf("%s [%s] %s\n%s\n%s\n\n", cursor, checked, webName, title, availableChapter)
 		}
 	}
-
-	b.WriteString("  " + m.paginator.View())
-	b.WriteString("\n\n  h/l ←/→ page • q: quit\n")
 
 	s += fmt.Sprintf("%s\n Press %s to confirm choice.\n\n", b.String(), focusedStyle.Render("y"))
 	return s
