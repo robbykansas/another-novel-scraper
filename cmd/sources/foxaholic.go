@@ -23,8 +23,8 @@ func FoxaholicSearch(searchTitle string, wg *sync.WaitGroup, ch chan<- []models.
 	c := colly.NewCollector()
 	var novels []models.NovelData
 	WebName := "Foxaholic"
-	fmt.Println(path, "<<<<<<< access foxaholic")
-	c.OnHTML(".c-tabs-item .c-tabs-item__content", func(e *colly.HTMLElement) {
+
+	c.OnHTML(".c-tabs-item__content", func(e *colly.HTMLElement) {
 		fmt.Println("<<<<<< go this")
 		Title := e.ChildText(".post-title")
 		Url := e.ChildAttr(".post-title h3 a", "href")
@@ -45,7 +45,6 @@ func FoxaholicSearch(searchTitle string, wg *sync.WaitGroup, ch chan<- []models.
 
 	err := c.Visit(path)
 	if err != nil {
-		fmt.Println(err, "<<<<< error")
 		chErr <- fmt.Errorf("%s %s", WebName, err.Error())
 	}
 
@@ -53,7 +52,7 @@ func FoxaholicSearch(searchTitle string, wg *sync.WaitGroup, ch chan<- []models.
 	chErr <- nil
 }
 
-func init() {
-	WebName := string(FoxaholicInfo.WebName)
-	models.MapSearch[WebName] = FoxaholicSearch
-}
+// func init() {
+// 	WebName := string(FoxaholicInfo.WebName)
+// 	models.MapSearch[WebName] = FoxaholicSearch
+// }
