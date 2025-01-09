@@ -29,13 +29,14 @@ func LightNovelWorldSearch(searchtitle string, wg *sync.WaitGroup, ch chan<- []m
 	err := chromedp.Run(ctx,
 		chromedp.Navigate(Target),
 		// chromedp.Sleep(5*time.Second),
-		// chromedp.WaitVisible("#inputContent", chromedp.ByID),
+		chromedp.WaitVisible("#inputContent", chromedp.ByID),
 		chromedp.SendKeys("#inputContent", searchtitle, chromedp.ByID),
 		// chromedp.WaitVisible("#novelListBase ul", chromedp.ByID),
 		chromedp.Nodes(".novel-list .novel-item a", &nodes, chromedp.NodeEnabled, chromedp.ByQueryAll),
 	)
 
 	if err != nil {
+		fmt.Println(err, "<<< error lightnovelworld")
 		log.Fatal(err)
 	}
 
