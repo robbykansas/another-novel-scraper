@@ -2,6 +2,7 @@ package sources
 
 import (
 	"fmt"
+	"log"
 	"robbykansas/another-novel-scraper/cmd/models"
 	"strings"
 	"sync"
@@ -45,6 +46,36 @@ func NovelAllSearch(searchTitle string, wg *sync.WaitGroup, ch chan<- []models.N
 
 	ch <- novels
 	chErr <- nil
+}
+
+func NovelAllContent(path string, title string) *models.NovelInfo {
+	// var list []models.ListChapter
+	Target := path
+	c := colly.NewCollector()
+	Author := ""
+	Image := ""
+	// Synopsis := ""
+
+	c.OnHTML(".detail-info", func(e *colly.HTMLElement) {
+		Author = e.ChildText("p:nth-child(2)")
+	})
+
+	c.OnHTML(".detail-cover", func(e *colly.HTMLElement) {
+		Image = e.ChildAttr("img", "src")
+	})
+
+	err := c.Visit(Target)
+	if err != nil {
+		log.Fatalf("Error while visiting url with error: %v", err)
+	}
+
+	res := &models.NovelInfo{
+		Title:  title,
+		Image:  Image,
+		Author: Author,
+	}
+
+	return res
 }
 
 func init() {
