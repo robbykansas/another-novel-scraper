@@ -78,6 +78,33 @@ func NovelAllContent(path string, title string) *models.NovelInfo {
 	return res
 }
 
+func NovelAllList(url string) []models.ListChapter {
+	c := colly.NewCollector()
+	var list []models.ListChapter
+	Order := 0
+
+	c.OnHTML("ul.detail-chlist > li", func(e *colly.HTMLElement) {
+		Title := e.ChildText("a")
+		Url := e.ChildAttr("a", "href")
+		Order += 1
+
+		info := &models.ListChapter{
+			Order: Order,
+			Title: Title,
+			Url:   Url,
+		}
+
+		list = append(list, *info)
+	})
+
+	err := c.Visit(url)
+	if err != nil {
+		log.Fatalf("Error while visiting url with error: %v", err)
+	}
+
+	return list
+}
+
 func init() {
 	WebName := string(NovelAllInfo.WebName)
 	models.MapSearch[WebName] = NovelAllSearch
