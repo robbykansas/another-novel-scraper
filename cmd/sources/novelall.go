@@ -60,8 +60,8 @@ func NovelAllContent(path string, title string) *models.NovelInfo {
 		Author = e.ChildText("p:nth-child(2)")
 	})
 
-	c.OnHTML(".detail-cover", func(e *colly.HTMLElement) {
-		Image = e.ChildAttr("img", "src")
+	c.OnHTML(".manga-detailtop img", func(e *colly.HTMLElement) {
+		Image = e.Attr("src")
 	})
 
 	err := c.Visit(Target)
@@ -69,10 +69,13 @@ func NovelAllContent(path string, title string) *models.NovelInfo {
 		log.Fatalf("Error while visiting url with error: %v", err)
 	}
 
+	list := NovelAllList(Target)
+
 	res := &models.NovelInfo{
 		Title:  title,
 		Image:  Image,
 		Author: Author,
+		Data:   list,
 	}
 
 	return res
@@ -102,10 +105,17 @@ func NovelAllList(url string) []models.ListChapter {
 		log.Fatalf("Error while visiting url with error: %v", err)
 	}
 
+	maxOrder := len(list)
+
+	for i := 0; i < maxOrder; i++ {
+		list[i].Order = maxOrder - i
+	}
+
 	return list
 }
 
 func init() {
 	WebName := string(NovelAllInfo.WebName)
 	models.MapSearch[WebName] = NovelAllSearch
+	models.MapToc[WebName] = NovelAllContent
 }
