@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly/v2"
 )
 
@@ -49,7 +50,7 @@ func NovelAllSearch(searchTitle string, wg *sync.WaitGroup, ch chan<- []models.N
 }
 
 func NovelAllContent(path string, title string) *models.NovelInfo {
-	// var list []models.ListChapter
+	var list []models.ListChapter
 	Target := path
 	c := colly.NewCollector()
 	Author := ""
@@ -69,7 +70,7 @@ func NovelAllContent(path string, title string) *models.NovelInfo {
 		log.Fatalf("Error while visiting url with error: %v", err)
 	}
 
-	list := NovelAllList(Target)
+	list = NovelAllList(Target)
 
 	res := &models.NovelInfo{
 		Title:  title,
@@ -114,8 +115,31 @@ func NovelAllList(url string) []models.ListChapter {
 	return list
 }
 
+func NovelAllGetContent(params models.ListChapter, wg *sync.WaitGroup, ch chan<- models.ListChapter) {
+	defer wg.Done()
+	c := colly.NewCollector()
+	var content string
+
+	c.OnHTML(".reading-box", func(e *colly.HTMLElement) {
+		e.DOM.Each(func(_ int, s *goquery.Selection) {
+			h, _ := s.Html()
+			content = fmt.Sprintf("%s \n", h)
+		})
+	})
+
+	err := c.Visit(params.Url)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	params.Content = content
+
+	ch <- params
+}
+
 func init() {
 	WebName := string(NovelAllInfo.WebName)
 	models.MapSearch[WebName] = NovelAllSearch
 	models.MapToc[WebName] = NovelAllContent
+	models.MapContent[WebName] = NovelAllGetContent
 }
