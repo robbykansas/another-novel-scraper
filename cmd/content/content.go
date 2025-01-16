@@ -72,7 +72,7 @@ func GetContent(content string, folder string, title string) {
 		wg.Add(1)
 
 		switch WebName {
-		case "Novelbin":
+		case "Novelbin", "NovelAll":
 			time.Sleep(500 * time.Millisecond)
 		default:
 			time.Sleep(10 * time.Millisecond)
