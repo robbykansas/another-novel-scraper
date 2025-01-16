@@ -126,21 +126,35 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		case "enter", " ":
-			if limitPage%limitPagination-1 >= 0 {
-				if m.cursor > limitPage%limitPagination-1 {
-					m.cursor = limitPage%limitPagination - 1
+			switch m.state {
+			case TitleView:
+				if limitPage%limitPagination-1 >= 0 {
+					if m.cursor > limitPage%limitPagination-1 {
+						m.cursor = limitPage%limitPagination - 1
+					}
 				}
-			}
 
-			if len(m.selected) == 1 {
-				m.selected = make(map[int]int)
-			}
-			_, ok := m.selected[m.cursor]
-			if ok {
-				delete(m.selected, m.cursor)
-			} else {
-				m.selected[m.cursor] = pageNow
-				savePage = pageNow
+				if len(m.selected) == 1 {
+					m.selected = make(map[int]int)
+				}
+				_, ok := m.selected[m.cursor]
+				if ok {
+					delete(m.selected, m.cursor)
+				} else {
+					m.selected[m.cursor] = pageNow
+					savePage = pageNow
+				}
+			case WebView:
+				if len(m.selected) == 1 {
+					m.selected = make(map[int]int)
+				}
+				_, ok := m.selected[m.cursor]
+				if ok {
+					delete(m.selected, m.cursor)
+				} else {
+					m.selected[m.cursor] = pageNow
+					savePage = pageNow
+				}
 			}
 		case "y":
 			if len(m.selected) == 1 {
