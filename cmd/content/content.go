@@ -18,11 +18,17 @@ import (
 
 func GetContent(content string, folder string, title string) {
 	var wg sync.WaitGroup
-	var channelContent = make(chan models.ListChapter, 10)
+	var channelContent = make(chan models.ListChapter)
 	var AllContent []models.ListChapter
 	dataContent := strings.Split(content, ",")
 	WebName := dataContent[0]
 	Url := dataContent[1]
+	switch WebName {
+	case "Novelbin", "NovelAll":
+		channelContent = make(chan models.ListChapter, 1)
+	default:
+		channelContent = make(chan models.ListChapter, 10)
+	}
 
 	spinnerModel := spinner.InitialModel()
 	s := tea.NewProgram(spinnerModel)
@@ -71,14 +77,15 @@ func GetContent(content string, folder string, title string) {
 	for _, content := range listData.Data {
 		wg.Add(1)
 
+		go models.MapContent[WebName](content, &wg, channelContent)
+
 		switch WebName {
 		case "Novelbin", "NovelAll":
-			time.Sleep(500 * time.Millisecond)
+			wg.Wait()
+			time.Sleep(400 * time.Millisecond)
 		default:
 			time.Sleep(10 * time.Millisecond)
 		}
-
-		go models.MapContent[WebName](content, &wg, channelContent)
 	}
 
 	cancel()
