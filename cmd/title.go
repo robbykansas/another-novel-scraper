@@ -107,6 +107,7 @@ var titleCmd = &cobra.Command{
 
 		searchTitle, err := search.SearchTitle(novel.NovelTitle)
 		if err != nil {
+			fmt.Printf("%s\n", err.Error())
 			os.Exit(1)
 		}
 
