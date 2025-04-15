@@ -108,6 +108,10 @@ func NovelAllList(url string) []models.ListChapter {
 
 	maxOrder := len(list)
 
+	if len(list) == 0 {
+		log.Fatal("Error: No chapters found")
+	}
+
 	for i := 0; i < maxOrder; i++ {
 		list[i].Order = maxOrder - i
 	}
@@ -129,7 +133,7 @@ func NovelAllGetContent(params models.ListChapter, wg *sync.WaitGroup, ch chan<-
 
 	err := c.Visit(params.Url)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal("Error while getting content")
 	}
 
 	params.Content = content
