@@ -1,6 +1,7 @@
 package search
 
 import (
+	"fmt"
 	"log"
 	"robbykansas/another-novel-scraper/cmd/models"
 	"robbykansas/another-novel-scraper/cmd/ui/progressbar"
@@ -57,11 +58,13 @@ func SearchTitle(title string) (map[string][]models.NovelData, error) {
 
 	// mapped channel result and grouped it based on title
 	for res := range channelRes {
-		if len(res) > 0 {
-			for _, g := range res {
-				groupedTitle[g.Title] = append(groupedTitle[g.Title], g)
-			}
+		for _, g := range res {
+			groupedTitle[g.Title] = append(groupedTitle[g.Title], g)
 		}
+	}
+
+	if len(groupedTitle) == 0 {
+		return nil, fmt.Errorf("no result found")
 	}
 
 	return groupedTitle, nil
