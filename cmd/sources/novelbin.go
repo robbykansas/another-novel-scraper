@@ -118,7 +118,7 @@ func NovelbinList(url string) []models.ListChapter {
 	return list
 }
 
-func NovelbinGetContent(params models.ListChapter, wg *sync.WaitGroup, ch chan<- models.ListChapter) {
+func NovelbinGetContent(params *models.ListChapter, wg *sync.WaitGroup, ch chan<- *models.ListChapter, pool *sync.Pool) {
 	defer wg.Done()
 	c := colly.NewCollector()
 	path := params.Url
@@ -136,9 +136,12 @@ func NovelbinGetContent(params models.ListChapter, wg *sync.WaitGroup, ch chan<-
 		log.Fatalf("Error while getting content with error: %v", err)
 	}
 
-	params.Content = content
+	res := pool.Get().(*models.ListChapter)
+	res.Title = params.Title
+	res.Order = params.Order
+	res.Content = content
 
-	ch <- params
+	ch <- res
 }
 
 func init() {
