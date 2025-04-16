@@ -139,7 +139,6 @@ func NovelfullList(url string) []models.ListChapter {
 
 func NovelfullEachPage(params *NovelEachPage, wg *sync.WaitGroup, list chan<- []models.ListChapter) {
 	defer wg.Done()
-	// var listEachChapter []NovelEachPage
 	var listChapter []models.ListChapter
 
 	Order := (params.Page - 1) * 50
@@ -171,7 +170,7 @@ func NovelfullEachPage(params *NovelEachPage, wg *sync.WaitGroup, list chan<- []
 	list <- listChapter
 }
 
-func NovelfullGetContent(params models.ListChapter, wg *sync.WaitGroup, ch chan<- models.ListChapter) {
+func NovelfullGetContent(params *models.ListChapter, wg *sync.WaitGroup, ch chan<- *models.ListChapter, pool *sync.Pool) {
 	defer wg.Done()
 	c := colly.NewCollector()
 	path := params.Url
@@ -189,9 +188,13 @@ func NovelfullGetContent(params models.ListChapter, wg *sync.WaitGroup, ch chan<
 		log.Fatalf("Error while getting content with error: %v", err)
 	}
 
-	params.Content = content
+	res := pool.Get().(*models.ListChapter)
 
-	ch <- params
+	res.Title = params.Title
+	res.Order = params.Order
+	res.Content = content
+
+	ch <- res
 }
 
 func init() {
