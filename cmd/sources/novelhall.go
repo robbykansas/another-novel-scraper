@@ -103,7 +103,7 @@ func NovelhallContent(path string, title string) *models.NovelInfo {
 	return res
 }
 
-func NovelhallGetContent(params models.ListChapter, wg *sync.WaitGroup, ch chan<- models.ListChapter) {
+func NovelhallGetContentNonPool(params models.ListChapter, wg *sync.WaitGroup, ch chan<- models.ListChapter) {
 	defer wg.Done()
 	c := colly.NewCollector()
 	path := fmt.Sprintf("%s%s", NovelhallInfo.Host, params.Url)
@@ -125,6 +125,33 @@ func NovelhallGetContent(params models.ListChapter, wg *sync.WaitGroup, ch chan<
 	params.Content = content
 
 	ch <- params
+}
+
+func NovelhallGetContent(params *models.ListChapter, wg *sync.WaitGroup, ch chan<- *models.ListChapter, pool *sync.Pool) {
+	defer wg.Done()
+	c := colly.NewCollector()
+	path := fmt.Sprintf("%s%s", NovelhallInfo.Host, params.Url)
+	var content string
+
+	c.OnHTML("div#htmlContent.entry-content", func(e *colly.HTMLElement) {
+		// This case for <br> in html, text won't get <br>, it only makes string combined, so we need to use goquery selection
+		e.DOM.Each(func(_ int, s *goquery.Selection) {
+			h, _ := s.Html()
+			content = fmt.Sprintf("%s \n", h)
+		})
+	})
+
+	err := c.Visit(path)
+	if err != nil {
+		log.Fatalf("Error while getting content with error: %v", err)
+	}
+
+	res := pool.Get().(*models.ListChapter)
+	res.Title = params.Title
+	res.Url = params.Url
+	res.Content = content
+
+	ch <- res
 }
 
 func init() {
