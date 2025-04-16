@@ -25,11 +25,18 @@ type WebInfo struct {
 	SearchUrl string
 }
 
+func (c *ListChapter) Reset() {
+	c.Order = 0
+	c.Title = ""
+	c.Url = ""
+	c.Content = ""
+}
+
 var DefaultPath string = "./ans-config"
 
 var MapSearch = make(map[string]func(string, *sync.WaitGroup, chan<- []NovelData, chan<- error))
 var MapToc = make(map[string]func(string, string) *NovelInfo)
-var MapContent = make(map[string]func(ListChapter, *sync.WaitGroup, chan<- ListChapter))
+var MapContent = make(map[string]func(*ListChapter, *sync.WaitGroup, chan<- *ListChapter, *sync.Pool))
 
 type NovelData struct {
 	WebName          string
