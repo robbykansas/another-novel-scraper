@@ -18,16 +18,22 @@ import (
 
 func GetContent(content string, folder string, title string) {
 	var wg sync.WaitGroup
-	var channelContent = make(chan models.ListChapter)
+	var channelContent = make(chan *models.ListChapter)
 	var AllContent []models.ListChapter
 	dataContent := strings.Split(content, ",")
 	WebName := dataContent[0]
 	Url := dataContent[1]
 	switch WebName {
 	case "Novelbin", "NovelAll":
-		channelContent = make(chan models.ListChapter, 1)
+		channelContent = make(chan *models.ListChapter, 1)
 	default:
-		channelContent = make(chan models.ListChapter, 10)
+		channelContent = make(chan *models.ListChapter, 10)
+	}
+
+	pool := &sync.Pool{
+		New: func() interface{} {
+			return &models.ListChapter{}
+		},
 	}
 
 	spinnerModel := spinner.InitialModel()
@@ -50,7 +56,10 @@ func GetContent(content string, folder string, title string) {
 		for {
 			content, ok := <-channelContent
 			if ok {
-				AllContent = append(AllContent, content)
+				copy := *content
+				AllContent = append(AllContent, copy)
+				content.Reset()
+				pool.Put(content)
 				p.Send(progressbar.ProgressMsg{})
 			} else {
 				time.Sleep(500 * time.Millisecond)
@@ -74,10 +83,10 @@ func GetContent(content string, folder string, title string) {
 		}
 	}(ctx)
 
-	for _, content := range listData.Data {
+	for i := range listData.Data {
 		wg.Add(1)
 
-		go models.MapContent[WebName](content, &wg, channelContent)
+		go models.MapContent[WebName](&listData.Data[i], &wg, channelContent, pool)
 
 		switch WebName {
 		case "Novelbin", "NovelAll":
