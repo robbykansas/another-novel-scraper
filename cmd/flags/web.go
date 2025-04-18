@@ -9,7 +9,6 @@ type Web models.Web
 
 var AllowedWeb []string
 
-// var AvailableWeb = fmt.Sprintf("available Web for scraping: %s", strings.Join(ListWeb, ", "))
 var errorScraping = "Error Scraping"
 
 func (n Web) String() string {
