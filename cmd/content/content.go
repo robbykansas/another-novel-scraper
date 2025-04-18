@@ -2,14 +2,14 @@ package content
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"robbykansas/another-novel-scraper/cmd/epub"
 	"robbykansas/another-novel-scraper/cmd/models"
+	"robbykansas/another-novel-scraper/cmd/testbenchmark"
 	"robbykansas/another-novel-scraper/cmd/ui/progressbar"
 	"robbykansas/another-novel-scraper/cmd/ui/spinner"
 	"sort"
-	"strings"
-	"sync"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -17,25 +17,21 @@ import (
 )
 
 func GetContent(content string, folder string, title string) {
-	var wg sync.WaitGroup
-	var channelContent = make(chan *models.ListChapter)
-	var AllContent []models.ListChapter
-	dataContent := strings.Split(content, ",")
-	WebName := dataContent[0]
-	Url := dataContent[1]
-	switch WebName {
-	case "Novelbin", "NovelAll":
-		channelContent = make(chan *models.ListChapter, 1)
-	default:
-		channelContent = make(chan *models.ListChapter, 10)
-	}
 
-	pool := &sync.Pool{
-		New: func() interface{} {
-			return &models.ListChapter{}
-		},
-	}
+	// Track memory usage before the benchmark
+	beforeMemStats := testbenchmark.GetMemStats()
 
+	// Start timer for benchmarking with pooling
+	start := time.Now()
+
+	list := models.ListContent(content, title)
+	wp := models.WorkerPoolContent{
+		List:        list.Data,
+		Concurrency: 10,
+	}
+	var SortContent []models.ListChapter
+
+	//  Spinner UI
 	spinnerModel := spinner.InitialModel()
 	s := tea.NewProgram(spinnerModel)
 
@@ -45,24 +41,23 @@ func GetContent(content string, folder string, title string) {
 		}
 	}()
 
-	listData := models.MapToc[WebName](Url, title)
-
 	s.Send(tea.QuitMsg{})
 
-	progressbarModel := progressbar.InitialModel(len(listData.Data))
+	// Progressbar UI
+	progressbarModel := progressbar.InitialModel(len(wp.List))
 	p := tea.NewProgram(progressbarModel)
 
 	go func() {
 		for {
-			content, ok := <-channelContent
+			content, ok := <-wp.Res
 			if ok {
 				copy := *content
-				AllContent = append(AllContent, copy)
+				SortContent = append(SortContent, copy)
 				content.Reset()
-				pool.Put(content)
+				wp.Pool.Put(content)
 				p.Send(progressbar.ProgressMsg{})
 			} else {
-				time.Sleep(500 * time.Millisecond)
+				time.Sleep(1000 * time.Millisecond)
 				p.Send(tea.Quit())
 				break
 			}
@@ -83,32 +78,36 @@ func GetContent(content string, folder string, title string) {
 		}
 	}(ctx)
 
-	for i := range listData.Data {
-		wg.Add(1)
-
-		go models.MapContent[WebName](&listData.Data[i], &wg, channelContent, pool)
-
-		switch WebName {
-		case "Novelbin", "NovelAll":
-			wg.Wait()
-			time.Sleep(400 * time.Millisecond)
-		default:
-			time.Sleep(10 * time.Millisecond)
-		}
-	}
+	wp.Run(content, title)
 
 	cancel()
 
-	go func() {
-		wg.Wait()
-		close(channelContent)
-	}()
-
-	sort.Slice(AllContent, func(i, j int) bool {
-		return AllContent[i].Order < AllContent[j].Order
+	sort.Slice(SortContent, func(i, j int) bool {
+		return SortContent[i].Order < SortContent[j].Order
 	})
 
-	listData.Data = AllContent
+	list.Data = SortContent
 
-	epub.SetEpub(folder, listData)
+	elapsed := time.Since(start)
+	fmt.Printf("Time taken (with pool): %s\n", elapsed)
+	time.Sleep(1 * time.Second)
+	fmt.Println(len(SortContent))
+	// Track memory usage after the benchmark
+	afterMemStats := testbenchmark.GetMemStats()
+
+	// Print memory statistics before and after
+	fmt.Printf("Memory Before: Alloc = %v, TotalAlloc = %v, Sys = %v, HeapAlloc = %v, HeapSys = %v\n",
+		beforeMemStats.Alloc, beforeMemStats.TotalAlloc, beforeMemStats.Sys, beforeMemStats.HeapAlloc, beforeMemStats.HeapSys)
+	fmt.Printf("Memory After: Alloc = %v, TotalAlloc = %v, Sys = %v, HeapAlloc = %v, HeapSys = %v\n",
+		afterMemStats.Alloc, afterMemStats.TotalAlloc, afterMemStats.Sys, afterMemStats.HeapAlloc, afterMemStats.HeapSys)
+
+	// Memory difference
+	memDiff := afterMemStats.Alloc - beforeMemStats.Alloc
+	fmt.Printf("Memory difference: %v bytes\n", memDiff)
+
+	// Track garbage collection (GC) stats
+	fmt.Printf("GC Cycles: %d\n", afterMemStats.NumGC-beforeMemStats.NumGC)
+	fmt.Printf("GC Pause (ns): %d\n", afterMemStats.PauseTotalNs-beforeMemStats.PauseTotalNs)
+
+	epub.SetEpub(folder, list)
 }
