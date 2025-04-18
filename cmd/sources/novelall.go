@@ -119,8 +119,8 @@ func NovelAllList(url string) []models.ListChapter {
 	return list
 }
 
-func NovelAllGetContent(params *models.ListChapter, wg *sync.WaitGroup, ch chan<- *models.ListChapter, pool *sync.Pool) {
-	defer wg.Done()
+func NovelAllGetContent(params *models.ListChapter, wp *models.WorkerPoolContent) {
+	defer wp.Wg.Done()
 	c := colly.NewCollector()
 	var content string
 
@@ -136,12 +136,12 @@ func NovelAllGetContent(params *models.ListChapter, wg *sync.WaitGroup, ch chan<
 		log.Fatal("Error while getting content")
 	}
 
-	res := pool.Get().(*models.ListChapter)
+	res := wp.Pool.Get().(*models.ListChapter)
 	res.Title = params.Title
 	res.Order = params.Order
 	res.Content = content
 
-	ch <- res
+	wp.Res <- res
 }
 
 func init() {

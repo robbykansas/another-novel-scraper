@@ -170,8 +170,8 @@ func NovelfullEachPage(params *NovelEachPage, wg *sync.WaitGroup, list chan<- []
 	list <- listChapter
 }
 
-func NovelfullGetContent(params *models.ListChapter, wg *sync.WaitGroup, ch chan<- *models.ListChapter, pool *sync.Pool) {
-	defer wg.Done()
+func NovelfullGetContent(params *models.ListChapter, wp *models.WorkerPoolContent) {
+	defer wp.Wg.Done()
 	c := colly.NewCollector()
 	path := params.Url
 	var content string
@@ -188,13 +188,13 @@ func NovelfullGetContent(params *models.ListChapter, wg *sync.WaitGroup, ch chan
 		log.Fatalf("Error while getting content with error: %v", err)
 	}
 
-	res := pool.Get().(*models.ListChapter)
+	res := wp.Pool.Get().(*models.ListChapter)
 
 	res.Title = params.Title
 	res.Order = params.Order
 	res.Content = content
 
-	ch <- res
+	wp.Res <- res
 }
 
 func init() {
