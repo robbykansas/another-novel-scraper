@@ -131,7 +131,7 @@ var titleCmd = &cobra.Command{
 		}
 
 		if novel.Web == "" {
-			headers := "Where you want the novel scraping from?"
+			headers := "Where do you want the novel scraping from?"
 			p = tea.NewProgram(listInput.InitialModelMulti(searchTitle, options.Web, headers, novel, listInput.WebView))
 			if _, err := p.Run(); err != nil {
 				cobra.CheckErr(err)
