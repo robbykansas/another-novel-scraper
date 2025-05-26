@@ -198,8 +198,8 @@ func NovelfullGetContent(params *models.ListChapter, wp *models.WorkerPoolConten
 }
 
 func init() {
-	var WebName = string(NovelfullInfo.WebName)
-	models.MapSearch[WebName] = NovelfullSearch
-	models.MapToc[WebName] = NovelfullContent
-	models.MapContent[WebName] = NovelfullGetContent
+	// var WebName = string(NovelfullInfo.WebName)
+	// models.MapSearch[WebName] = NovelfullSearch
+	// models.MapToc[WebName] = NovelfullContent
+	// models.MapContent[WebName] = NovelfullGetContent
 }
