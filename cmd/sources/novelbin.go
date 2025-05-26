@@ -13,8 +13,8 @@ import (
 
 var NovelbinInfo = models.WebInfo{
 	WebName:   "Novelbin",
-	Host:      "https://novelbin.com",
-	SearchUrl: "https://novelbin.com/search?keyword=%s",
+	Host:      "https://novelbin.me",
+	SearchUrl: "https://novelbin.me/search?keyword=%s",
 }
 
 func NovelbinSearch(searchTitle string, wg *sync.WaitGroup, ch chan<- []models.NovelData, chErr chan<- error) {
@@ -145,8 +145,8 @@ func NovelbinGetContent(params *models.ListChapter, wp *models.WorkerPoolContent
 }
 
 func init() {
-	var WebName = string(NovelbinInfo.WebName)
-	models.MapSearch[WebName] = NovelbinSearch
-	models.MapToc[WebName] = NovelbinContent
-	models.MapContent[WebName] = NovelbinGetContent
+	// var WebName = string(NovelbinInfo.WebName)
+	// models.MapSearch[WebName] = NovelbinSearch
+	// models.MapToc[WebName] = NovelbinContent
+	// models.MapContent[WebName] = NovelbinGetContent
 }
