@@ -131,8 +131,8 @@ func NovelhallGetContent(params *models.ListChapter, wp *models.WorkerPoolConten
 }
 
 func init() {
-	WebName := string(NovelhallInfo.WebName)
-	models.MapSearch[WebName] = NovelhallSearch
-	models.MapToc[WebName] = NovelhallContent
-	models.MapContent[WebName] = NovelhallGetContent
+	// WebName := string(NovelhallInfo.WebName)
+	// models.MapSearch[WebName] = NovelhallSearch
+	// models.MapToc[WebName] = NovelhallContent
+	// models.MapContent[WebName] = NovelhallGetContent
 }
