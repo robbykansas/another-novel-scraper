@@ -145,8 +145,8 @@ func NovelbinGetContent(params *models.ListChapter, wp *models.WorkerPoolContent
 }
 
 func init() {
-	// var WebName = string(NovelbinInfo.WebName)
-	// models.MapSearch[WebName] = NovelbinSearch
-	// models.MapToc[WebName] = NovelbinContent
-	// models.MapContent[WebName] = NovelbinGetContent
+	var WebName = string(NovelbinInfo.WebName)
+	models.MapSearch[WebName] = NovelbinSearch
+	models.MapToc[WebName] = NovelbinContent
+	models.MapContent[WebName] = NovelbinGetContent
 }
