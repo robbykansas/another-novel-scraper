@@ -38,11 +38,12 @@ archives:
       {{- if .Arm }}v{{ .Arm }}{{ end }}
     # use zip for windows archives
     files:
-      - run.bat
       - ans-config/another-novel-scraper-config.yaml
     format_overrides:
       - goos: windows
         format: zip
+        files: 
+          - run.bat
 
 changelog:
   sort: asc
